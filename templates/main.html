@@ -1,11 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    main
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Create Quiz - QuizApp{% endblock %}
+
+{% block content %}
+<div class="create-quiz-container">
+  <!-- Star image -->
+  <img src="{% static 'images/Star.svg' %}" alt="Star" class="quiz-star">
+
+  <!-- Heading and Subtext -->
+  <h2 class="quiz-heading">Create a New Quiz</h2>
+  <p class="quiz-subtext">Create quizzes, play, and share them with your friends.</p>
+
+  <!-- Upgrade Banner -->
+  <div class="upgrade-banner" id="upgradeBanner">
+    <div class="upgrade-left">
+      <div class="upgrade-icon">
+        <img src="{% static 'images/ticket-star.webp' %}" alt="Premium Icon">
+      </div>
+      <div class="upgrade-text">
+        <strong>Generate More with Premium</strong>
+        <p>Upgrade for more powerful AI, unlimited questions, and support for longer documents. Supercharge your learning experience today!</p>
+      </div>
+    </div>
+    <div class="upgrade-right">
+      <button class="upgrade-btn">Upgrade</button>
+      <button class="close-btn" onclick="closeBanner()">×</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}QuizApp Dashboard{% endblock %}</title>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="logo">
+        <img src="{% static 'images/slide-logo.webp' %}" alt="Main Logo" class="main-logo">
+        <img src="{% static 'images/main-logo.webp' %}" alt="Small Logo" class="collapsed-logo">
+      </div>
+      <ul>
+        <li>
+          <a href="#">
+            <div class="icon-circle"><i class="fa-solid fa-plus"></i></div>
+            <span class="label">New Quiz</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <div class="icon-circle"><i class="fa-solid fa-users"></i></div>
+            <span class="label">Groups</span>
+            <div class="right-circle"><i class="fa-solid fa-plus"></i></div>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <div class="icon-circle"><i class="fa-solid fa-heart"></i></div>
+            <span class="label">All Quizzes</span>
+          </a>
+        </li>
+        <li class="upgrade">
+          <div class="icon-circle"><i class="fa-solid fa-arrow-up"></i></div>
+          <div class="upgrade-text">
+            Upgrade<br>
+            <small>More access to the best models</small>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar">
+      <div class="navbar-left">
+        <button class="toggle-btn" onclick="toggleSidebar()">
+          <img src="{% static 'images/menu-icon.svg' %}" alt="Toggle Sidebar" id="toggleIcon" width="30" height="30">
+        </button>
+      </div>
+      <div class="navbar-right">
+        <button class="navbar-icon bell-icon">
+          <i class="fa-solid fa-bell"></i>
+        </button>
+        <button class="navbar-icon">
+          <div class="apps-grid">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </button>
+        <div class="profile-avatar">U</div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      {% block content %}
+      <h1>Main Content Area</h1>
+      <p>This is where your main quiz content will load.</p>
+      {% endblock %}
+    </div>
+  </div>
+
+  <!-- Custom JS -->
+  <script src="{% static 'js/base.js' %}"></script>
+</body>
+</html>
