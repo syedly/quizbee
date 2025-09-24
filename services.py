@@ -57,21 +57,45 @@ Question Difficulty Levels:
 ...
 """
 
-def generate__quiz(topic: str, language: str = "English", num_questions: int = 5, difficulty: int = 1, question_type: str = "mix") -> str:
+def generate__quiz(
+    topic: str = "General",
+    language: str = "English",
+    num_questions: int = 5,
+    difficulty: int = 1,
+    question_type: str = "mix",
+    content: str = None
+) -> str:
     """
-    Generates a quiz using Gemini AI with question type preferences.
-    question_type can be: 'mcq', 'true_false', 'short_answer', 'fill_blank', or 'mix'
+    Generates a quiz using Gemini AI with flexible input.
+    - topic: default topic if nothing else is given
+    - content: can be user prompt, text, URL content, or file content
+    - language: language of quiz
+    - num_questions: how many questions
+    - difficulty: 1–5 scale
+    - question_type: mcq, true_false, short_answer, fill_blank, or mix
     """
+    # Build the base prompt
+    if content:
+        base_text = content
+    else:
+        base_text = topic
+
     prompt = (
-        f"Make a quiz on '{topic}' in {language} with "
-        f"{num_questions} questions at difficulty level {difficulty}. "
-        f"Ensure the questions are of type: {question_type}."
+        f"Make a quiz based on the following content:\n\n"
+        f"{base_text}\n\n"
+        f"Language: {language}\n"
+        f"Number of questions: {num_questions}\n"
+        f"Difficulty level: {difficulty}\n"
+        f"Question type: {question_type}\n"
     )
 
+    # LangChain messages
     messages = [
         SystemMessage(content=system_message),
         HumanMessage(content=prompt),
     ]
 
+    # Call Gemini
     response = llm.invoke(messages)
     return response.content
+

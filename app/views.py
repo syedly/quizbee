@@ -36,7 +36,7 @@ def handle_signup(request):
 
 def main(request):
     # show list of quizzes on this page
-    quizzes = Quiz.objects.all().order_by('-id')[:20]
+    quizzes = Quiz.objects.filter(user=request.user)
     return render(request, 'main.html', {'quizzes': quizzes})
 
 # -----------------------------
@@ -178,7 +178,36 @@ def generate_quiz(request):
         difficulty = request.POST.get('difficulty', '1')
         question_preference = request.POST.get('question_preference', 'MIX')
 
-        raw_quiz = generate__quiz(topic, language, num_questions, difficulty, question_preference)
+        # Extra fields
+        prompt = request.POST.get('prompt', '').strip()
+        url = request.POST.get('url', '').strip()
+        text = request.POST.get('text', '').strip()
+        upload_file = request.FILES.get('file')
+
+        # Decide the source of content
+        content_source = None
+        if prompt:
+            content_source = prompt
+        elif url:
+            content_source = f"Extract quiz from URL: {url}"
+        elif text:
+            content_source = text
+        elif upload_file:
+            file_text = upload_file.read().decode("utf-8", errors="ignore")
+            content_source = file_text
+        else:
+            content_source = topic  # fallback to topic if nothing else
+
+        # Now send everything to your generator
+        raw_quiz = generate__quiz(
+            topic=topic,
+            language=language,
+            num_questions=num_questions,
+            difficulty=difficulty,
+            question_type=question_preference,
+            content=content_source  # <-- NEW argument
+        )
+
         parsed_quiz = parse_quiz_response(raw_quiz)
 
         quiz = Quiz.objects.create(
@@ -188,7 +217,7 @@ def generate_quiz(request):
             question_preference=question_preference
         )
 
-        # save questions
+        # Save questions
         for q in parsed_quiz["questions"]:
             question = Question.objects.create(
                 quiz=quiz,
@@ -205,4 +234,3 @@ def generate_quiz(request):
         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
 
     return redirect('main')
-

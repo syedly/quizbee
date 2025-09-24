@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Quiz Bar</title>
+  <link rel="stylesheet" href="{% static 'css/input-bar.css' %}">
+  <style>
+    /* Small fallback styling so it's visible without CSS */
+    select, input, textarea, button {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    .qz-subject-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="qz-wrapper" id="quizInputBar">
+  <div class="qz-area">
+
+    <!-- TOP ROW -->
+    <div class="qz-top">
+      <div class="qz-subject">
+        <div class="qz-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="2" width="8" height="8" rx="2" fill="#fff"/>
+            <rect x="14" y="2" width="8" height="8" rx="2" fill="#fff"/>
+            <rect x="2" y="14" width="8" height="8" rx="2" fill="#fff"/>
+            <rect x="14" y="14" width="8" height="8" rx="2" fill="#fff"/>
+          </svg>
+        </div>
+
+        <div class="qz-subject-controls" id="qzSubjectControls">
+          <select id="qz-subject-select" aria-label="Subject">
+            <option value="" disabled selected>Choose a Subject</option>
+            <option value="prompt">Prompt</option>
+            <option value="import">Import</option>
+            <option value="upload">Upload File</option>
+            <option value="url">Upload URL</option>
+            <option value="text">Text</option>
+          </select>
+
+          <select id="qz-topic-select" disabled aria-label="Topic">
+            <option value="" selected>Choose a Topic</option>
+          </select>
+
+          <select id="qz-subtopic-select" disabled aria-label="Subtopic">
+            <option value="" selected>Choose a Sub-Topic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="qz-bottom">
+      <div class="qz-pill">
+        <div class="pill-icon purple"></div>
+        <div class="pill-body">
+          <div class="label">Type</div>
+          <select id="qz-type">
+            <option value="short">Short Question</option>
+            <option value="truefalse">True / False</option>
+            <option value="mcq">Multiple Choice</option>
+            <option value="fill">Fill in the blanks</option>
+            <option value="mix">Mix</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="qz-pill">
+        <div class="pill-icon purple"></div>
+        <div class="pill-body">
+          <div class="label"># of Questions</div>
+          <select id="qz-count">
+            <option>5</option><option>10</option><option>15</option><option>20</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="qz-pill">
+        <div class="pill-icon red"></div>
+        <div class="pill-body">
+          <div class="label">Language</div>
+          <select id="qz-lang">
+            <option value="english">English</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="qz-pill">
+        <div class="pill-icon green"></div>
+        <div class="pill-body">
+          <div class="label">Difficulty Level</div>
+          <select id="qz-diff">
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="qz-build" id="qzBuildBtn">Build My Quiz</button>
+    </div>
+
+    <!-- mini collapsed bar -->
+    <div class="qz-mini" aria-hidden="true">Create Quiz Options ▾</div>
+  </div>
+</div>
+
+<script src="{% static 'js/input-bar.js' %}"></script>
+
+</body>
+</html>
