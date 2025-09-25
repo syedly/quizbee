@@ -40,6 +40,10 @@ def main(request):
     quizzes = Quiz.objects.filter(user=request.user)
     return render(request, 'main.html', {'quizzes': quizzes})
 
+def all_quizes(request):
+    quizzes = Quiz.objects.filter(user=request.user)
+    return render(request, 'all-quizes.html', {'quizzes': quizzes})
+
 # -----------------------------
 # Parser / save helpers
 # -----------------------------

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{% endblock title %}
+{% block content %}
+        {% for quiz in quizzes %}
+          <li>
+            {% comment %} <a href="{% url 'quiz_detail' quiz.id %}"> {% endcomment %}
+              <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
+              <span class="label">{{ quiz.topic }}</span>
+            </a>
+          </li>
+        {% empty %}
+          <li>
+            <span class="label text-muted">No quizzes yet</span>
+          </li>
+        {% endfor %}
+{% endblock content %}
