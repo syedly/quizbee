@@ -14,33 +14,23 @@
     let extraControls = "";
 
     if (v === "prompt") {
-      extraControls = `
-        <input class="qz-prompt" id="qzPromptInput" placeholder="Enter prompt">
-      `;
+      extraControls = `<input class="qz-prompt" id="qzPromptInput" placeholder="Enter prompt">`;
     } else if (v === "url") {
-      extraControls = `
-        <input class="qz-prompt" id="qzUrlInput" placeholder="Enter a URL">
-      `;
+      extraControls = `<input class="qz-prompt" id="qzUrlInput" placeholder="Enter a URL">`;
     } else if (v === "import") {
-      extraControls = `
-        <button id="qzImportBtn">Import Data</button>
-      `;
+      extraControls = `<button id="qzImportBtn">Import Data</button>`;
     } else if (v === "upload") {
-      extraControls = `
-        <input type="file" id="qzFileInput">
-      `;
+      extraControls = `<input type="file" id="qzFileInput">`;
     } else if (v === "text") {
+      extraControls = `<textarea id="qzTextArea" placeholder="Enter your text here"></textarea>`;
+    } else if (v === "general") {
       extraControls = `
-        <textarea id="qzTextArea" placeholder="Enter your text here"></textarea>
+        <select id="qz-topic-select"><option value="">Choose a Topic</option></select>
+        <select id="qz-subtopic-select"><option value="">Choose a Sub-Topic</option></select>
       `;
     }
 
-    // Always append topic + subtopic selects
-    subjectControls.innerHTML += `
-      ${extraControls}
-      <select id="qz-topic-select"><option value="">Choose a Topic</option></select>
-      <select id="qz-subtopic-select"><option value="">Choose a Sub-Topic</option></select>
-    `;
+    subjectControls.innerHTML += extraControls;
   });
 
   // ---------------------------
@@ -51,23 +41,24 @@
     if (!buildBtn) return;
 
     buildBtn.addEventListener("click", async () => {
-      // Core inputs
       const subject = document.getElementById("qz-subject-select")?.value || "";
-      const topic = document.getElementById("qz-topic-select")?.value || subject;
-      const subtopic = document.getElementById("qz-subtopic-select")?.value || "";
+
+      // Safe checks so it doesn’t break when selects don’t exist
+      const topicEl = document.getElementById("qz-topic-select");
+      const subtopicEl = document.getElementById("qz-subtopic-select");
+      const topic = topicEl ? topicEl.value : subject;
+      const subtopic = subtopicEl ? subtopicEl.value : "";
 
       const type = document.getElementById("qz-type")?.value || "mix";
       const count = document.getElementById("qz-count")?.value || 5;
       const lang = document.getElementById("qz-lang")?.value || "English";
       const diff = document.getElementById("qz-diff")?.value || 1;
 
-      // Extra inputs
       const promptText = document.getElementById("qzPromptInput")?.value || "";
       const urlText = document.getElementById("qzUrlInput")?.value || "";
       const customText = document.getElementById("qzTextArea")?.value || "";
       const fileInput = document.getElementById("qzFileInput")?.files?.[0] || null;
 
-      // Build FormData
       const formData = new FormData();
       formData.append("topic", topic || "General");
       formData.append("language", lang);
@@ -92,7 +83,6 @@
           return;
         }
 
-        // Render returned HTML
         const html = await response.text();
         document.body.innerHTML = html;
       } catch (err) {
@@ -101,7 +91,6 @@
       }
     });
 
-    // Helper for CSRF
     function getCSRFToken() {
       const name = "csrftoken";
       const cookies = document.cookie.split(";");

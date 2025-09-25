@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from services import generate__quiz
+from processing import fetch_text_from_url, extract_text_from_pdf
 from .models import Quiz, Question, Option
 
 def index(request):
@@ -189,12 +190,11 @@ def generate_quiz(request):
         if prompt:
             content_source = prompt
         elif url:
-            content_source = f"Extract quiz from URL: {url}"
+            content_source = content_source = fetch_text_from_url(url)
         elif text:
             content_source = text
-        elif upload_file:
-            file_text = upload_file.read().decode("utf-8", errors="ignore")
-            content_source = file_text
+        elif upload_file and upload_file.name.endswith(".pdf"):
+            content_source = extract_text_from_pdf(upload_file)
         else:
             content_source = topic  # fallback to topic if nothing else
 
