@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from services import generate__quiz
 from processing import fetch_text_from_url, extract_text_from_pdf
-from .models import Quiz, Question, Option
+from .models import Quiz, Question, Option, QuizAttempt
 
 def index(request):
     return render(request, 'index.html')
@@ -238,3 +238,40 @@ def generate_quiz(request):
         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
 
     return redirect('main')
+
+def quiz_detail(request, quiz_id):
+    quiz  = get_object_or_404(Quiz, id=quiz_id)
+    questions = quiz.questions.all()
+    return render(request, 'quiz-detail.html', {'quiz': quiz, 'questions': questions}) 
+
+
+def quiz_take(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    questions = quiz.questions.all()
+
+    if request.method == "POST":
+        marks = 0
+        user_answers = {}
+
+        for question in questions:
+            user_answer = request.POST.get(str(question.id))  # input name = question.id
+            user_answers[str(question.id)] = user_answer
+
+            if user_answer and user_answer.strip().lower() == question.answer.strip().lower():
+                marks += 1
+
+        attempt = QuizAttempt.objects.create(
+            user=request.user,
+            quiz=quiz,
+            score=marks,
+            answers=user_answers
+        )
+
+        return redirect("quiz_result", attempt_id=attempt.id)
+
+    return render(request, "quiz-take.html", {"quiz": quiz, "questions": questions})
+
+def quiz_result(request, attempt_id):
+    attempt = get_object_or_404(QuizAttempt, id=attempt_id)
+    quiz = attempt.quiz
+    return render(request, "quiz-result.html", {"attempt": attempt, "quiz": quiz})

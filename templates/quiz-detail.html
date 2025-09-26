@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{% endblock title %}
+{% block content %}
+    <h1>Quiz: {{ quiz.topic }}</h1>
+    <p>Difficulty: {{ quiz.difficulty }}</p>
+    <p>Question Preference: {{ quiz.get_question_preference_display }}</p>
+    <hr>
+
+    <h2>Questions</h2>
+    <ol>
+        {% for q in questions %}
+            <li>
+                <p><b>Q{{ forloop.counter }}:</b> {{ q.text }}</p>
+
+                {% if q.question_type == "MCQ" %}
+                    <ul>
+                        {% for opt in q.options.all %}
+                            <li>{{ opt.text }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <p><b>Answer:</b> {{ q.answer }}</p>
+                <hr>
+            </li>
+        {% empty %}
+            <p>No questions available for this quiz.</p>
+        {% endfor %}
+    </ol>
+
+    <a href="{% url 'quiz_take' quiz.id %}">Start this Quiz</a>
+{% endblock content %}

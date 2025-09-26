@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{% endblock title %}
+{% block content %}
+<h2>{{ quiz.topic }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {% for q in questions %}
+        <div>
+            <p><b>Q{{ forloop.counter }}:</b> {{ q.text }}</p>
+
+            {% if q.question_type == "MCQ" %}
+                {% for opt in q.options.all %}
+                    <label>
+                        <input type="radio" name="{{ q.id }}" value="{{ opt.text }}">
+                        {{ opt.text }}
+                    </label><br>
+                {% endfor %}
+
+            {% elif q.question_type == "TF" %}
+                <label><input type="radio" name="{{ q.id }}" value="True"> True</label>
+                <label><input type="radio" name="{{ q.id }}" value="False"> False</label>
+
+            {% else %}
+                <input type="text" name="{{ q.id }}" placeholder="Your answer">
+            {% endif %}
+        </div>
+        <hr>
+    {% endfor %}
+    <button type="submit">Submit Quiz</button>
+</form>
+
+{% endblock content %}

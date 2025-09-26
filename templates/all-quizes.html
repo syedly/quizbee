@@ -6,7 +6,8 @@
             {% comment %} <a href="{% url 'quiz_detail' quiz.id %}"> {% endcomment %}
               <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
               <span class="label">{{ quiz.topic }}</span>
-            </a>
+            <a href="{% url "quiz_take" quiz.id %}">start quiz</a>
+            <a href="{% url "quiz_detail" quiz.id %}">quiz detail</a>
           </li>
         {% empty %}
           <li>

@@ -46,3 +46,13 @@ class Option(models.Model):
 
     def __str__(self):
         return self.text
+
+class QuizAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    answers = models.JSONField(default=dict)  # e.g. {question_id: "user_answer"}
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.quiz.topic} ({self.score})"

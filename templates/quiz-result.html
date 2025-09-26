@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{% endblock title %}
+{% block content %}
+        <h2>Results for {{ quiz.topic }}</h2>
+<p>Score: {{ attempt.score }} / {{ quiz.questions.count }}</p>
+
+<h3>Your Answers:</h3>
+<ul>
+    {% for q in quiz.questions.all %}
+        <li>
+            <b>{{ q.text }}</b><br>
+            ✅ Correct Answer: {{ q.answer }}<br>
+            📝 Your Answer: {{ attempt.answers.q.id|stringformat:"s" }}
+        </li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}
