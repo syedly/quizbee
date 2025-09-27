@@ -99,3 +99,16 @@ def generate__quiz(
     response = llm.invoke(messages)
     return response.content
 
+def check_short_answer(user_answer: str, correct_answer: str) -> bool:
+    system_message = """
+    You are a helpful assistant that checks short answers.
+    - Compare the user's answer with the correct answer.
+    - Be lenient with minor spelling mistakes or synonyms.
+    - Return True if the answer is correct, otherwise return False.
+    """
+    messages = [
+        SystemMessage(content=system_message),
+        HumanMessage(content=f"User's answer: {user_answer}\nCorrect answer: {correct_answer}\nIs the user's answer correct?"),
+    ]
+    response = llm.invoke(messages)
+    return response.content.strip().lower() == "true"

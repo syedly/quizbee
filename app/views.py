@@ -3,7 +3,7 @@ import re
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
-from services import generate__quiz
+from services import generate__quiz, check_short_answer
 from processing import fetch_text_from_url, extract_text_from_pdf
 from .models import Quiz, Question, Option, QuizAttempt
 
@@ -257,6 +257,9 @@ def quiz_take(request, quiz_id):
             user_answer = request.POST.get(str(question.id))  # input name = question.id
             user_answers[str(question.id)] = user_answer
 
+            if question.question_type == "SHORT":
+                if user_answer and check_short_answer(user_answer, question.answer):
+                    marks += 1
             if user_answer and user_answer.strip().lower() == question.answer.strip().lower():
                 marks += 1
 
