@@ -2,7 +2,7 @@
 import re
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer
 from processing import fetch_text_from_url, extract_text_from_pdf
 from .models import Quiz, Question, Option, QuizAttempt
@@ -35,14 +35,34 @@ def handle_signup(request):
         return redirect('login')
     return render(request, 'signup.html')
 
+def handle_logout(request):
+    logout(request)
+    return redirect('index')
+
 def main(request):
     # show list of quizzes on this page
     quizzes = Quiz.objects.filter(user=request.user)
     return render(request, 'main.html', {'quizzes': quizzes})
 
 def all_quizes(request):
-    quizzes = Quiz.objects.filter(user=request.user)
+    user = request.user
+    quizzes = Quiz.objects.all()  # show all quizzes
+
+    # Get all quiz IDs that the user has attempted
+    attempted_quizzes = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
+
+    # Attach attempted flag
+    for quiz in quizzes:
+        quiz.attempted = quiz.id in attempted_quizzes
+
     return render(request, 'all-quizes.html', {'quizzes': quizzes})
+
+def delete_quiz(request, **kwargs):
+    quiz_id = kwargs.get("quiz_id")
+    user = request.user
+    quiz = get_object_or_404(Quiz, id=quiz_id, user=user)
+    quiz.delete()
+    return redirect("all_quizes")
 
 # -----------------------------
 # Parser / save helpers
@@ -278,3 +298,16 @@ def quiz_result(request, attempt_id):
     attempt = get_object_or_404(QuizAttempt, id=attempt_id)
     quiz = attempt.quiz
     return render(request, "quiz-result.html", {"attempt": attempt, "quiz": quiz})
+
+def quiz_list(request):
+    user = request.user
+    quizzes = Quiz.objects.all()
+
+    # Mark which quizzes the user has attempted
+    attempted_quizzes = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
+
+    for quiz in quizzes:
+        quiz.attempted = quiz.id in attempted_quizzes  # add a custom attribute
+
+    return render(request, "quiz_list.html", {"quizzes": quizzes})
+

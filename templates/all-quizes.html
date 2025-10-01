@@ -1,17 +1,23 @@
 {% extends "base.html" %}
-{% block title %}{% endblock title %}
+{% block title %}Quizzes{% endblock title %}
 {% block content %}
-        {% for quiz in quizzes %}
-          <li>
-            {% comment %} <a href="{% url 'quiz_detail' quiz.id %}"> {% endcomment %}
-              <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
-              <span class="label">{{ quiz.topic }}</span>
-            <a href="{% url "quiz_take" quiz.id %}">start quiz</a>
-            <a href="{% url "quiz_detail" quiz.id %}">quiz detail</a>
-          </li>
-        {% empty %}
-          <li>
-            <span class="label text-muted">No quizzes yet</span>
-          </li>
-        {% endfor %}
+    {% for quiz in quizzes %}
+      <li>
+        <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
+        <span class="label">{{ quiz.topic }}</span>
+
+        {% if quiz.attempted %}
+            <a href="{% url 'quiz_take' quiz.id %}">Retake Quiz</a>
+        {% else %}
+            <a href="{% url 'quiz_take' quiz.id %}">Start Quiz</a>
+        {% endif %}
+
+        <a href="{% url 'quiz_detail' quiz.id %}">Quiz Detail</a>
+        <a href="{% url 'delete_quiz' quiz.id %}">Delete Quiz</a>
+      </li>
+    {% empty %}
+      <li>
+        <span class="label text-muted">No quizzes yet</span>
+      </li>
+    {% endfor %}
 {% endblock content %}
