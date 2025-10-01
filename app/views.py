@@ -44,18 +44,30 @@ def main(request):
     quizzes = Quiz.objects.filter(user=request.user)
     return render(request, 'main.html', {'quizzes': quizzes})
 
+# def all_quizes(request):
+#     user = request.user
+#     quizzes = Quiz.objects.all()  # show all quizzes
+
+#     # Get all quiz IDs that the user has attempted
+#     attempted_quizzes = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
+
+#     # Attach attempted flag
+#     for quiz in quizzes:
+#         quiz.attempted = quiz.id in attempted_quizzes
+
+#     return render(request, 'all-quizes.html', {'quizzes': quizzes})
+
 def all_quizes(request):
     user = request.user
-    quizzes = Quiz.objects.all()  # show all quizzes
+    quizzes = Quiz.objects.all()
 
-    # Get all quiz IDs that the user has attempted
-    attempted_quizzes = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
-
-    # Attach attempted flag
     for quiz in quizzes:
-        quiz.attempted = quiz.id in attempted_quizzes
+        attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
+        quiz.attempt = attempt   # attach attempt (or None)
+        quiz.attempted = attempt is not None
 
     return render(request, 'all-quizes.html', {'quizzes': quizzes})
+
 
 def delete_quiz(request, **kwargs):
     quiz_id = kwargs.get("quiz_id")
