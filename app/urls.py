@@ -13,4 +13,5 @@ urlpatterns = [
     path("quiz/result/<int:attempt_id>/", views.quiz_result, name="quiz_result"),
     path('logout/', views.handle_logout, name='logout'),
     path('delete_quiz/<int:quiz_id>/', views.delete_quiz, name='delete_quiz'),
+    path("quiz/<int:quiz_id>/share/", views.share_quiz, name="share_quiz"),
 ]

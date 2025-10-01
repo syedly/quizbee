@@ -59,7 +59,7 @@ def main(request):
 
 def all_quizes(request):
     user = request.user
-    quizzes = Quiz.objects.all()
+    quizzes = Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)
 
     for quiz in quizzes:
         attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
@@ -74,6 +74,21 @@ def delete_quiz(request, **kwargs):
     user = request.user
     quiz = get_object_or_404(Quiz, id=quiz_id, user=user)
     quiz.delete()
+    return redirect("all_quizes")
+
+def share_quiz(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id, user=request.user)
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        try:
+            user_to_share = User.objects.get(username=username)
+            quiz.shared_with.add(user_to_share)  # add user to shared list
+        except User.DoesNotExist:
+            return HttpResponse(f"User '{username}' does not exist!")
+
+        return redirect("all_quizes")
+
     return redirect("all_quizes")
 
 # -----------------------------
