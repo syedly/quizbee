@@ -338,3 +338,34 @@ def quiz_list(request):
 
     return render(request, "quiz_list.html", {"quizzes": quizzes})
 
+def retake_quiz(request, quiz_id):
+    user = request.user
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    # Always fetch the existing attempt (one per user+quiz)
+    attempt, created = QuizAttempt.objects.get_or_create(user=user, quiz=quiz)
+
+    if request.method == "POST":
+        questions = quiz.questions.all()
+        marks = 0
+        user_answers = {}
+
+        for question in questions:
+            user_answer = request.POST.get(str(question.id))
+            user_answers[str(question.id)] = user_answer
+
+            if question.question_type == "SHORT":
+                if user_answer and check_short_answer(user_answer, question.answer):
+                    marks += 1
+            elif user_answer and user_answer.strip().lower() == question.answer.strip().lower():
+                marks += 1
+
+        # ✅ Update the existing attempt instead of creating new
+        attempt.score = marks
+        attempt.answers = user_answers
+        attempt.save()
+
+        return redirect("quiz_result", attempt_id=attempt.id)
+
+    return render(request, "quiz-take.html", {"quiz": quiz, "questions": quiz.questions.all()})
+

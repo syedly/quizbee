@@ -7,7 +7,7 @@
         <span class="label">{{ quiz.topic }}</span>
 
         {% if quiz.attempted %}
-            <a href="{% url 'quiz_take' quiz.id %}">Retake Quiz</a>
+            <a href="{% url 'retake_quiz' quiz.id %}">Retake Quiz</a>
             <a href="{% url 'quiz_result' quiz.attempt.id %}">Show Quiz Result</a>
         {% else %}
             <a href="{% url 'quiz_take' quiz.id %}">Start Quiz</a>
