@@ -6,6 +6,13 @@ from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer
 from processing import fetch_text_from_url, extract_text_from_pdf
 from .models import Quiz, Question, Option, QuizAttempt
+from constants import (
+    LANGUAGES, DEFAULT_LANGUAGE,
+    DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY,
+    QUESTION_TYPES, DEFAULT_QUESTION_TYPE,
+    CHOOSE_OPTIONS, DEFAULT_CHOOSE
+)
+
 
 def index(request):
     return render(request, 'index.html')
@@ -40,9 +47,31 @@ def handle_logout(request):
     return redirect('index')
 
 def main(request):
-    # show list of quizzes on this page
     quizzes = Quiz.objects.filter(user=request.user)
-    return render(request, 'main.html', {'quizzes': quizzes})
+
+    return render(
+        request,
+        'main.html',
+        {
+            'quizzes': quizzes,
+
+            # languages
+            'languages': LANGUAGES,
+            'default_language': DEFAULT_LANGUAGE,
+
+            # difficulty levels
+            'levels': DIFFICULTY_LEVELS,
+            'default_level': DEFAULT_DIFFICULTY,
+
+            # question types
+            'question_types': QUESTION_TYPES,
+            'default_type': DEFAULT_QUESTION_TYPE,
+
+            # choose options
+            'choose_options': CHOOSE_OPTIONS,
+            'default_choose': DEFAULT_CHOOSE,
+        }
+    )
 
 # def all_quizes(request):
 #     user = request.user
