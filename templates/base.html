@@ -11,6 +11,7 @@
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dropdown.css' %}">
 </head>
 <body>
   <div class="container">
@@ -81,7 +82,12 @@
             <div class="dot"></div><div class="dot"></div><div class="dot"></div>
           </div>
         </button>
-        <div class="profile-avatar">U</div>
+        <div class="profile-dropdown">
+        <button class="profile-avatar" id="profileBtn">{{ user.username }}</button>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="{% url 'logout' %}">Logout</a>
+        </div>
+      </div>
       </div>
     </div>
 
@@ -96,5 +102,6 @@
 
   <!-- Custom JS -->
   <script src="{% static 'js/base.js' %}"></script>
+  <script src="{% static 'js/dropdown.js' %}"></script>
 </body>
 </html>
