@@ -1,18 +1,36 @@
 {% extends "base.html" %}
-{% block title %}{% endblock title %}
+{% block title %}Quiz Results{% endblock title %}
+{% load static %}
 {% block content %}
-        <h2>Results for {{ quiz.topic }}</h2>
-<p>Score: {{ attempt.score }} / {{ quiz.questions.count }}</p>
+<div style="max-width: 900px; margin: 30px auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
 
-<h3>Your Answers:</h3>
-<ul>
+    <!-- Avatar + Score Section -->
+    <div style="text-align: center; margin-bottom: 30px;">
+        <img src="{% static 'images/grid.svg' %}" alt="User Avatar" 
+             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #4CAF50; margin-bottom: 15px;">
+        
+        <h2 style="margin: 0;">Results for {{ quiz.topic }}</h2>
+        <p style="font-size: 20px; margin-top: 10px;">
+            🎯 <b>Score: {{ attempt.score }} / {{ quiz.questions.count }}</b>
+        </p>
+    </div>
+
+    <!-- Questions Section -->
+    <h3 style="margin-bottom: 15px;">Your Answers:</h3>
     {% for q in quiz.questions.all %}
-        <li>
-            <b>{{ q.text }}</b><br>
-            ✅ Correct Answer: {{ q.answer }}<br>
-            📝 Your Answer: {{ attempt.answers.q.id|stringformat:"s" }}
-        </li>
-    {% endfor %}
-</ul>
+    <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 10px; background: #f9f9f9;">
+        <p style="font-weight: bold;">Q{{ forloop.counter }}: {{ q.text }}</p>
 
+        <p>✅ <b>Correct Answer:</b> {{ q.answer }}</p>
+        <p>📝 <b>Your Answer:</b> 
+            {% if attempt.answers.q.id == q.answer %}
+                <span style="color: green;">{{ attempt.answers.q.id|stringformat:"s" }} ✔</span>
+            {% else %}
+                <span style="color: red;">{{ attempt.answers.q.id|stringformat:"s" }} ✘</span>
+            {% endif %}
+        </p>
+    </div>
+    {% endfor %}
+
+</div>
 {% endblock content %}

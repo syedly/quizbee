@@ -83,7 +83,7 @@
           </div>
         </button>
         <div class="profile-dropdown">
-        <button class="profile-avatar" id="profileBtn">{{ user.username }}</button>
+        <button class="profile-avatar" id="profileBtn">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</button>
         <div class="dropdown-menu" id="dropdownMenu">
           <a href="{% url 'logout' %}">Logout</a>
         </div>

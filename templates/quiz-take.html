@@ -1,11 +1,16 @@
 {% extends "base.html" %}
-{% block title %}{% endblock title %}
+{% load static %}
+{% block title %}Take Quiz{% endblock title %}
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/takeQuiz.css' %}">
+
 <h2>{{ quiz.topic }}</h2>
-<form method="post">
+
+<form method="post" id="quizForm">
     {% csrf_token %}
+
     {% for q in questions %}
-        <div>
+        <div class="question-container" id="question-{{ forloop.counter }}" style="display: none;">
             <p><b>Q{{ forloop.counter }}:</b> {{ q.text }}</p>
 
             {% if q.question_type == "MCQ" %}
@@ -23,10 +28,23 @@
             {% else %}
                 <input type="text" name="{{ q.id }}" placeholder="Your answer">
             {% endif %}
+
+            <br><br>
+            <span class="timer" id="timer-{{ forloop.counter }}">Time left: 60s</span><br>
+            <button type="button" class="nextBtn" onclick="nextQuestion({{ forloop.counter }})">Next</button>
         </div>
-        <hr>
     {% endfor %}
-    <button type="submit">Submit Quiz</button>
+
+    <div id="submitSection" style="display: none;">
+        <button type="submit">Submit Quiz</button>
+    </div>
 </form>
+
+<!-- Load JS -->
+<script src="{% static 'js/takeQuiz.js' %}"></script>
+<script>
+    // Initialize quiz with total number of questions
+    initQuiz({{ questions|length }});
+</script>
 
 {% endblock content %}

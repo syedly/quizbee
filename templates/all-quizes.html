@@ -1,57 +1,84 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Quizzes{% endblock title %}
 {% block content %}
-    {% for quiz in quizzes %}
-      <li>
-        <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
-        <span class="label">{{ quiz.topic }}</span>
 
-        {% if quiz.attempted %}
-            <a href="{% url 'retake_quiz' quiz.id %}">Retake Quiz</a>
-            <a href="{% url 'quiz_result' quiz.attempt.id %}">Show Quiz Result</a>
-        {% else %}
-            <a href="{% url 'quiz_take' quiz.id %}">Start Quiz</a>
-        {% endif %}
+<!-- SweetAlert -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <a href="{% url 'quiz_detail' quiz.id %}">Quiz Detail</a>
-        <a href="{% url 'delete_quiz' quiz.id %}">Delete Quiz</a>
+<!-- Custom CSS -->
+<link rel="stylesheet" href="{% static 'css/allQuizes.css' %}">
 
-        <!-- 🔎 Share quiz by username -->
-        <form action="{% url 'share_quiz' quiz.id %}" method="post" style="margin-top:10px;">
-            {% csrf_token %}
-            <input type="text" name="username" placeholder="Enter username to share" required>
-            <button type="submit">Share</button>
-        </form>
-      </li>
-    {% empty %}
-      <li>
-        <span class="label text-muted">No quizzes yet</span>
-      </li>
-    {% endfor %}
+<ul style="padding:0;">
+{% for quiz in quizzes %}
+  <li class="quiz-card">
+    <div class="quiz-header">
+      <div class="quiz-title">
+        <i class="fa-solid fa-circle-question"></i> {{ quiz.topic }}
+      </div>
+
+      <!-- Meter -->
+      <div class="meter-container">
+        <div class="meter">
+          <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="gradient-{{ quiz.id }}" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+                <stop offset="25%" style="stop-color:#84cc16;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#eab308;stop-opacity:1" />
+                <stop offset="75%" style="stop-color:#f97316;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <path d="M 10 50 A 40 40 0 0 1 90 50" 
+                  fill="none" 
+                  stroke="url(#gradient-{{ quiz.id }})" 
+                  stroke-width="12" 
+                  stroke-linecap="round"/>
+          </svg>
+          <div class="needle" id="needle-{{ quiz.id }}"></div>
+        </div>
+        <div class="meter-labels">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-buttons">
+      {% if quiz.attempted %}
+        <a href="{% url 'retake_quiz' quiz.id %}" class="btn-retake">Retake Quiz</a>
+        <a href="{% url 'quiz_result' quiz.attempt.id %}" class="btn-result">Show Result</a>
+      {% else %}
+        <a href="{% url 'quiz_take' quiz.id %}" class="btn-start">Start Quiz</a>
+      {% endif %}
+      <a href="{% url 'quiz_detail' quiz.id %}" class="btn-detail">Quiz Detail</a>
+      <a href="{% url 'delete_quiz' quiz.id %}" class="btn-delete">Delete</a>
+
+      <!-- Hidden Django form -->
+      <form id="share-form-{{ quiz.id }}" action="{% url 'share_quiz' quiz.id %}" method="post" style="display:none;">
+          {% csrf_token %}
+          <input type="hidden" name="username" id="username-{{ quiz.id }}">
+      </form>
+
+      <!-- SweetAlert trigger button -->
+      <button type="button" class="btn-share" onclick="openShareForm({{ quiz.id }})">Share</button>
+    </div>
+  </li>
+{% empty %}
+  <li class="quiz-card">
+    <span class="text-muted">No quizzes yet</span>
+  </li>
+{% endfor %}
+</ul>
+
+<!-- Custom JS -->
+<script src="{% static 'js/allQuizes.js' %}"></script>
+<script>
+  // Initialize needles
+  {% for quiz in quizzes %}
+    rotateNeedle({{ quiz.id }}, {{ quiz.difficulty|default:1 }});
+  {% endfor %}
+</script>
+
 {% endblock content %}
-
-{% comment %} {% extends "base.html" %}
-{% block title %}Quizzes{% endblock title %}
-{% block content %}
-    {% for quiz in quizzes %}
-      <li>
-        <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
-        <span class="label">{{ quiz.topic }}</span>
-
-         {% if quiz.attempted %}
-            <a href="{% url 'quiz_take' quiz.id %}">Retake Quiz</a>
-            <a href="{% url 'quiz_result' quiz.attempt.id %}">Show Quiz Result</a>
-        {% else %}
-            <a href="{% url 'quiz_take' quiz.id %}">Start Quiz</a>
-        {% endif %}
-
-
-        <a href="{% url 'quiz_detail' quiz.id %}">Quiz Detail</a>
-        <a href="{% url 'delete_quiz' quiz.id %}">Delete Quiz</a>
-      </li>
-    {% empty %}
-      <li>
-        <span class="label text-muted">No quizzes yet</span>
-      </li>
-    {% endfor %}
-{% endblock content %} {% endcomment %}
