@@ -101,7 +101,7 @@ def main(request):
 
 def all_quizes(request):
     user = request.user
-    quizzes = Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)
+    quizzes = (Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)).distinct()
 
     for quiz in quizzes:
         attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
