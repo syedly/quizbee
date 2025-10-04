@@ -16,6 +16,7 @@ class Quiz(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="quizzes")
     question_preference = models.CharField(max_length=10, choices=QUESTION_PREFERENCES, default="MIX")
     shared_with = models.ManyToManyField(User, related_name="shared_quizzes", blank=True)
+    is_public = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.topic} (Difficulty {self.difficulty})"

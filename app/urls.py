@@ -15,4 +15,7 @@ urlpatterns = [
     path('delete_quiz/<int:quiz_id>/', views.delete_quiz, name='delete_quiz'),
     path("quiz/<int:quiz_id>/share/", views.share_quiz, name="share_quiz"),
     path('retake_quiz/<int:quiz_id>/', views.retake_quiz, name='retake_quiz'),
+    path('settings/', views.settings, name='settings'),
+    path("quiz/<int:quiz_id>/is-public/", views.is_public, name="is_public"),
+
 ]

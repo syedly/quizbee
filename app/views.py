@@ -47,6 +47,17 @@ def handle_logout(request):
     logout(request)
     return redirect('index')
 
+def settings(request):
+    return render(request, 'settings.html')
+
+def is_public(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id, user=request.user)
+    if request.method == "POST":
+        is_public = request.POST.get("is_public") == "on"
+        quiz.is_public = is_public
+        quiz.save()
+        return redirect("all_quizes")
+
 def main(request):
     quizzes = Quiz.objects.filter(user=request.user)
 

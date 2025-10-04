@@ -11,6 +11,7 @@
           <tr>
             <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Quiz Title</th>
             <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Difficulty</th>
+            <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300 text-center">Public</th>
             <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300 text-center">Actions</th>
           </tr>
         </thead>
@@ -37,40 +38,61 @@
               </span>
             </td>
 
+            <!-- Public Checkbox -->
+            <td class="px-6 py-4 text-center">
+              <form method="post" action="{% url 'is_public' quiz.id %}">
+                {% csrf_token %}
+                <input type="checkbox" name="is_public" onchange="this.form.submit()"
+                       {% if quiz.is_public %}checked{% endif %}
+                       class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary">
+              </form>
+            </td>
+
             <!-- Actions -->
             <td class="px-6 py-4 text-center">
               <div class="flex justify-center items-center space-x-3">
                 {% if quiz.attempted %}
-                  <a href="{% url 'retake_quiz' quiz.id %}" class="icon-btn">
+                  <!-- Retake -->
+                  <a href="{% url 'retake_quiz' quiz.id %}" class="icon-btn group relative">
                     <span class="material-symbols-outlined">refresh</span>
+                    <span class="tooltip">Retake Quiz</span>
                   </a>
-                  <a href="{% url 'quiz_result' quiz.attempt.id %}" class="icon-btn">
+                  <!-- View Result -->
+                  <a href="{% url 'quiz_result' quiz.attempt.id %}" class="icon-btn group relative">
                     <span class="material-symbols-outlined">visibility</span>
+                    <span class="tooltip">View Result</span>
                   </a>
                 {% else %}
-                  <a href="{% url 'quiz_take' quiz.id %}" class="icon-btn">
+                  <!-- Take Quiz -->
+                  <a href="{% url 'quiz_take' quiz.id %}" class="icon-btn group relative">
                     <span class="material-symbols-outlined">play_arrow</span>
+                    <span class="tooltip">Start Quiz</span>
                   </a>
                 {% endif %}
-                <a href="{% url 'quiz_detail' quiz.id %}" class="icon-btn">
+
+                <!-- Info -->
+                <a href="{% url 'quiz_detail' quiz.id %}" class="icon-btn group relative">
                   <span class="material-symbols-outlined">info</span>
+                  <span class="tooltip">Quiz Details</span>
                 </a>
 
                 <!-- Share -->
-                <button type="button" class="icon-btn" onclick="openShareModal({{ quiz.id }})">
+                <button type="button" class="icon-btn group relative" onclick="openShareModal({{ quiz.id }})">
                   <span class="material-symbols-outlined">share</span>
+                  <span class="tooltip">Share Quiz</span>
                 </button>
 
                 <!-- Delete -->
-                <a href="{% url 'delete_quiz' quiz.id %}" class="icon-btn text-red-500">
+                <a href="{% url 'delete_quiz' quiz.id %}" class="icon-btn text-red-500 group relative">
                   <span class="material-symbols-outlined">delete</span>
+                  <span class="tooltip">Delete Quiz</span>
                 </a>
               </div>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="3" class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
+            <td colspan="4" class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
               No quizzes yet
             </td>
           </tr>
@@ -114,6 +136,29 @@
     </form>
   </div>
 </div>
+
+<style>
+/* Tooltip Styling */
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 125%; /* above the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+.group:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+</style>
 
 <script src="{% static 'js/allQuizes.js' %}"></script>
 {% endblock content %}
