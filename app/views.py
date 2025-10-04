@@ -2,6 +2,7 @@
 import re
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer
 from processing import fetch_text_from_url, extract_text_from_pdf
@@ -86,16 +87,32 @@ def main(request):
 
 #     return render(request, 'all-quizes.html', {'quizzes': quizzes})
 
+# def all_quizes(request):
+#     user = request.user
+#     quizzes = Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)
+
+#     for quiz in quizzes:
+#         attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
+#         quiz.attempt = attempt   # attach attempt (or None)
+#         quiz.attempted = attempt is not None
+
+#     return render(request, 'all-quizes.html', {'quizzes': quizzes})
+
+
 def all_quizes(request):
     user = request.user
     quizzes = Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)
 
     for quiz in quizzes:
         attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
-        quiz.attempt = attempt   # attach attempt (or None)
+        quiz.attempt = attempt
         quiz.attempted = attempt is not None
 
-    return render(request, 'all-quizes.html', {'quizzes': quizzes})
+    paginator = Paginator(quizzes, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'all-quizes.html', {'page_obj': page_obj})
 
 
 def delete_quiz(request, **kwargs):
@@ -251,45 +268,110 @@ def save_quiz_to_db(parsed_quiz):
     return quiz
 
 # The single generate_quiz view used by the template
+# def generate_quiz(request):
+#     if request.method == 'POST':
+#         topic = request.POST.get('topic', 'General')
+#         language = request.POST.get('language', 'English')
+#         num_questions = request.POST.get('num_questions', '5')
+#         difficulty = request.POST.get('difficulty', '1')
+#         question_preference = request.POST.get('question_preference', 'MIX')
+
+#         # Extra fields
+#         prompt = request.POST.get('prompt', '').strip()
+#         url = request.POST.get('url', '').strip()
+#         text = request.POST.get('text', '').strip()
+#         upload_file = request.FILES.get('file')
+
+#         # Decide the source of content
+#         content_source = None
+#         if prompt:
+#             content_source = prompt
+#         elif url:
+#             content_source = content_source = fetch_text_from_url(url)
+#         elif text:
+#             content_source = text
+#         elif upload_file and upload_file.name.endswith(".pdf"):
+#             content_source = extract_text_from_pdf(upload_file)
+#         else:
+#             content_source = topic  # fallback to topic if nothing else
+
+#         # Now send everything to your generator
+#         raw_quiz = generate__quiz(
+#             topic=topic,
+#             language=language,
+#             num_questions=num_questions,
+#             difficulty=difficulty,
+#             question_type=question_preference,
+#             content=content_source  # <-- NEW argument
+#         )
+
+#         parsed_quiz = parse_quiz_response(raw_quiz)
+
+#         quiz = Quiz.objects.create(
+#             topic=parsed_quiz["topic"],
+#             difficulty=parsed_quiz["difficulty"],
+#             user=request.user if request.user.is_authenticated else None,
+#             question_preference=question_preference
+#         )
+
+#         # Save questions
+#         for q in parsed_quiz["questions"]:
+#             question = Question.objects.create(
+#                 quiz=quiz,
+#                 text=q["text"],
+#                 question_type=q["type"],
+#                 difficulty=q["difficulty"],
+#                 answer=q["answer"]
+#             )
+#             if q["type"] == "MCQ" and q.get("mcq_options"):
+#                 for opt in q["mcq_options"]:
+#                     Option.objects.create(question=question, text=opt.strip())
+
+#         quizzes = Quiz.objects.all().order_by('-id')[:20]
+#         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
+
+#     return redirect('main')
 def generate_quiz(request):
     if request.method == 'POST':
+        # Basic settings
         topic = request.POST.get('topic', 'General')
         language = request.POST.get('language', 'English')
-        num_questions = request.POST.get('num_questions', '5')
+        num_questions = request.POST.get('quiz_count', '5')   # template uses quiz_count
         difficulty = request.POST.get('difficulty', '1')
-        question_preference = request.POST.get('question_preference', 'MIX')
+        question_preference = request.POST.get('quiz_type', 'MIX')  # template uses quiz_type
 
-        # Extra fields
-        prompt = request.POST.get('prompt', '').strip()
-        url = request.POST.get('url', '').strip()
-        text = request.POST.get('text', '').strip()
-        upload_file = request.FILES.get('file')
+        # Extra fields (align with template names)
+        prompt = request.POST.get('input_prompt', '').strip()
+        url = request.POST.get('input_url', '').strip()
+        text = request.POST.get('input_text', '').strip()
+        upload_file = request.FILES.get('input_pdf')   # template uses input_pdf
 
         # Decide the source of content
         content_source = None
         if prompt:
             content_source = prompt
         elif url:
-            content_source = content_source = fetch_text_from_url(url)
+            content_source = fetch_text_from_url(url)
         elif text:
             content_source = text
         elif upload_file and upload_file.name.endswith(".pdf"):
             content_source = extract_text_from_pdf(upload_file)
         else:
-            content_source = topic  # fallback to topic if nothing else
+            content_source = topic  # fallback if nothing else
 
-        # Now send everything to your generator
+        # Call generator
         raw_quiz = generate__quiz(
             topic=topic,
             language=language,
             num_questions=num_questions,
             difficulty=difficulty,
             question_type=question_preference,
-            content=content_source  # <-- NEW argument
+            content=content_source
         )
 
         parsed_quiz = parse_quiz_response(raw_quiz)
 
+        # Save quiz
         quiz = Quiz.objects.create(
             topic=parsed_quiz["topic"],
             difficulty=parsed_quiz["difficulty"],
@@ -297,7 +379,7 @@ def generate_quiz(request):
             question_preference=question_preference
         )
 
-        # Save questions
+        # Save questions + options
         for q in parsed_quiz["questions"]:
             question = Question.objects.create(
                 quiz=quiz,
@@ -314,6 +396,7 @@ def generate_quiz(request):
         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
 
     return redirect('main')
+
 
 def quiz_detail(request, quiz_id):
     quiz  = get_object_or_404(Quiz, id=quiz_id)

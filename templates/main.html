@@ -1,32 +1,95 @@
-{% extends 'base.html' %}
-{% load static %}
-{% block title %}Create Quiz - QuizApp{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Create Quiz - Quiz Hippo{% endblock %}
 
 {% block content %}
-<div class="create-quiz-container">
-  <!-- Star image -->
-  <img src="{% static 'images/Star.svg' %}" alt="Star" class="quiz-star">
+<div class="w-full max-w-3xl mx-auto">
+  <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Create a Quiz</h2>
 
-  <!-- Heading and Subtext -->
-  <h2 class="quiz-heading">Create a New Quiz</h2>
-  <p class="quiz-subtext">Create quizzes, play, and share them with your friends.</p>
+  <form method="POST" action="{% url 'generate_quiz' %}" enctype="multipart/form-data" class="space-y-8">
+    {% csrf_token %}
 
-  <!-- Upgrade Banner -->
-  <div class="upgrade-banner" id="upgradeBanner">
-    <div class="upgrade-left">
-      <div class="upgrade-icon">
-        <img src="{% static 'images/ticket-star.webp' %}" alt="Premium Icon">
+    <!-- Input Options -->
+    <div>
+      <div class="flex gap-2 flex-wrap mb-4">
+        <button type="button" onclick="showInput('text')" id="btn-text" class="tab-btn active">Enter Text</button>
+        <button type="button" onclick="showInput('prompt')" id="btn-prompt" class="tab-btn">Enter Prompt</button>
+        <button type="button" onclick="showInput('url')" id="btn-url" class="tab-btn">Provide URL</button>
+        <button type="button" onclick="showInput('pdf')" id="btn-pdf" class="tab-btn">Upload PDF</button>
       </div>
-      <div class="upgrade-text">
-        <strong>Generate More with Premium</strong>
-        <p>Upgrade for more powerful AI, unlimited questions, and support for longer documents. Supercharge your learning experience today!</p>
+
+      <!-- Text input -->
+      <div id="input-text" class="input-box">
+        <label class="block text-sm font-medium mb-2">Text</label>
+        <textarea name="input_text" class="w-full rounded-lg p-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 min-h-32"></textarea>
+      </div>
+
+      <!-- Prompt input -->
+      <div id="input-prompt" class="input-box hidden">
+        <label class="block text-sm font-medium mb-2">Prompt</label>
+        <textarea name="input_prompt" class="w-full rounded-lg p-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 min-h-24"></textarea>
+      </div>
+
+      <!-- URL input -->
+      <div id="input-url" class="input-box hidden">
+        <label class="block text-sm font-medium mb-2">URL</label>
+        <input type="url" name="input_url" class="w-full rounded-lg py-3 px-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700"/>
+      </div>
+
+      <!-- PDF input -->
+      <div id="input-pdf" class="input-box hidden">
+        <label class="block text-sm font-medium mb-2">Upload PDF</label>
+        <input type="file" name="input_pdf" accept="application/pdf" class="w-full rounded-lg py-3 px-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700"/>
       </div>
     </div>
-    <div class="upgrade-right">
-      <button class="upgrade-btn">Upgrade</button>
-      <button class="close-btn" onclick="closeBanner()">×</button>
+
+    <!-- Quiz Settings -->
+    <div class="border-t border-gray-200 dark:border-gray-800 pt-6">
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Quiz Settings</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium mb-2">Quiz Type</label>
+          <select name="quiz_type" class="w-full rounded-lg py-3 px-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700">
+            {% for key, label in question_types.items %}
+              <option value="{{ key }}" {% if key == default_type %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Number of Questions</label>
+          <select name="quiz_count" class="w-full rounded-lg py-3 px-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700">
+            <option value="5">5</option>
+            <option value="10" {% if default_count == 10 %}selected{% endif %}>10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Difficulty</label>
+          <select name="difficulty" class="w-full rounded-lg py-3 px-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700">
+            {% for level, label in levels.items %}
+              <option value="{{ level }}" {% if level == default_level %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Language</label>
+          <select name="language" class="w-full rounded-lg py-3 px-4 bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700">
+            {% for code, name in languages.items %}
+              <option value="{{ code }}" {% if code == default_language %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end">
+      <button type="submit" class="flex items-center justify-center gap-2 rounded-lg h-12 px-8 bg-primary text-white font-bold shadow-lg hover:bg-primary/90 transition w-full sm:w-auto">
+        <span>Create Quiz</span>
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+    </div>
+  </form>
 </div>
-{% include "input-bar.html" %}
 {% endblock %}

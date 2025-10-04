@@ -1,107 +1,109 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}QuizApp Dashboard{% endblock %}</title>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>{% block title %}Quiz Hippo{% endblock %}</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{% static 'css/base.css' %}">
-  <link rel="stylesheet" href="{% static 'css/dropdown.css' %}">
+  <style>
+    body { font-family: 'Space Grotesk', sans-serif; }
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    }
+    .tab-btn {
+      @apply px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium bg-white dark:bg-gray-800 hover:bg-primary/10 dark:hover:bg-primary/20 transition;
+    }
+    .tab-btn.active {
+      @apply bg-primary text-white;
+    }
+    .sidebar { transition: transform 0.3s ease-in-out; }
+    .sidebar-closed { transform: translateX(-100%); }
+  </style>
+  {% block extra_head %}{% endblock %}
 </head>
-<body>
-  <div class="container">
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-      <div class="logo">
-        <img src="{% static 'images/slide-logo.webp' %}" alt="Main Logo" class="main-logo">
-        <img src="{% static 'images/main-logo.webp' %}" alt="Small Logo" class="collapsed-logo">
-      </div>
-      <ul>
-        <li>
-          <a href="{% url "main" %}">
-            <div class="icon-circle"><i class="fa-solid fa-plus"></i></div>
-            <span class="label">New Quiz</span>
-          </a>
-        </li>
-        <li>
-          <a href="#">
-            <div class="icon-circle"><i class="fa-solid fa-users"></i></div>
-            <span class="label">Groups</span>
-            <div class="right-circle"><i class="fa-solid fa-plus"></i></div>
-          </a>
-        </li>
-        <li>
-          <a href="{% url "all_quizes" %}">
-            <div class="icon-circle"><i class="fa-solid fa-heart"></i></div>
-            <span class="label">All Quizzes</span>
-          </a>
-        </li>
-          <!-- ✅ User’s quizzes list -->
-        {% for quiz in quizzes %}
-          <li>
-            {% comment %} <a href="{% url 'quiz_detail' quiz.id %}"> {% endcomment %}
-              <div class="icon-circle"><i class="fa-solid fa-circle-question"></i></div>
-              <span class="label">{{ quiz.topic }}</span>
-            </a>
-          </li>
-        {% empty %}
-          <li>
-            <span class="label text-muted">No quizzes yet</span>
-          </li>
-        {% endfor %}
-        <li class="upgrade">
-          <div class="icon-circle"><i class="fa-solid fa-arrow-up"></i></div>
-          <div class="upgrade-text">
-            Upgrade<br>
-            <small>More access to the best models</small>
-          </div>
-        </li>
-      </ul>
-    </div>
+<body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200">
+<div class="flex min-h-screen">
 
-    <!-- Navbar -->
-    <div class="navbar">
-      <div class="navbar-left">
-        <button class="toggle-btn" onclick="toggleSidebar()">
-          <img src="{% static 'images/menu-icon.svg' %}" alt="Toggle Sidebar" id="toggleIcon" width="30" height="30">
-        </button>
-      </div>
-      <div class="navbar-right">
-        <button class="navbar-icon bell-icon">
-          <i class="fa-solid fa-bell"></i>
-        </button>
-        <button class="navbar-icon">
-          <div class="apps-grid">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-          </div>
-        </button>
-        <div class="profile-dropdown">
-        <button class="profile-avatar" id="profileBtn">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</button>
-        <div class="dropdown-menu" id="dropdownMenu">
-          <a href="{% url 'logout' %}">Logout</a>
-        </div>
-      </div>
-      </div>
+  <!-- Sidebar -->
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-background-light/95 dark:bg-background-dark/95 p-4 z-50 md:relative md:translate-x-0 sidebar-closed md:flex flex-col justify-between">
+  <div>
+    <div class="flex items-center gap-3 mb-8">
+      <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style="background-image: url('{% static "images/logo.png" %}');"></div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white">Quiz Hippo</h1>
     </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      {% block content %}
-      <h1>Main Content Area</h1>
-      <p>This is where your main quiz content will load.</p>
-      {% endblock %}
-    </div>
+    <nav class="flex flex-col gap-2">
+      <a href="{% url 'main' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">home</span>
+        <span class="font-medium">Home</span>
+      </a>
+      <a href="{% url 'all_quizes' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+        <span class="material-symbols-outlined">description</span>
+        <span class="font-medium">My Quizzes</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+        <span class="material-symbols-outlined">explore</span>
+        <span class="font-medium">Explore</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+        <span class="material-symbols-outlined">group</span>
+        <span class="font-medium">Friends</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="font-medium">Settings</span>
+      </a>
+    </nav>
   </div>
 
-  <!-- Custom JS -->
-  <script src="{% static 'js/base.js' %}"></script>
-  <script src="{% static 'js/dropdown.js' %}"></script>
+  <!-- Bottom Buttons (stay at bottom always) -->
+  <div class="mt-6 space-y-3">
+    <!-- New Quiz Button -->
+    <button class="flex w-full items-center justify-center gap-2 rounded-lg h-12 px-4 bg-primary text-white font-bold shadow-lg hover:bg-primary/90 transition">
+      <span class="material-symbols-outlined">add_circle</span>
+      <span class="truncate">New Quiz</span>
+    </button>
+
+    <!-- Logout Button -->
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" 
+              class="flex w-full items-center justify-center gap-2 rounded-lg h-12 px-4 
+                     bg-red-600 text-white font-bold shadow-lg hover:bg-red-700 transition">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="truncate">Logout</span>
+      </button>
+    </form>
+  </div>
+</aside>
+
+
+
+  <!-- Overlay for mobile -->
+  <div id="overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+  <!-- Main Content -->
+  <div class="flex flex-col flex-1">
+    <!-- Mobile header -->
+    <header class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 md:hidden">
+      <h1 class="text-lg font-bold text-gray-900 dark:text-white">Quiz Hippo</h1>
+      <button id="menuBtn" class="p-2 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+    </header>
+
+    <main class="flex-1 flex flex-col justify-between p-6 lg:p-8">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script src="{% static 'js/base.js' %}"></script>
+
+{% block extra_js %}{% endblock %}
 </body>
 </html>

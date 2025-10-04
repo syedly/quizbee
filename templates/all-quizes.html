@@ -1,84 +1,119 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Quizzes{% endblock title %}
+{% block title %}All Quizzes{% endblock title %}
+
 {% block content %}
+<main class="flex-1 p-4 sm:p-6 bg-background-light dark:bg-background-dark">
+  <div class="bg-white dark:bg-primary/10 rounded-xl shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="border-b border-primary/20 dark:border-primary/30">
+          <tr>
+            <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Quiz Title</th>
+            <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Difficulty</th>
+            <th class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for quiz in page_obj %}
+          <tr class="border-b border-primary/10 dark:border-primary/20">
+            <!-- Quiz Title -->
+            <td class="px-6 py-4 whitespace-nowrap text-slate-800 dark:text-white font-medium">
+              <i class="fa-solid fa-circle-question mr-2"></i> {{ quiz.topic }}
+            </td>
 
-<!-- SweetAlert -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark/dark.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <!-- Difficulty -->
+            <td class="px-6 py-4">
+              <div class="w-32 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full" 
+                     style="width: {{ quiz.difficulty|add:"0" }}0%"></div>
+              </div>
+              <span class="text-xs text-slate-500 dark:text-slate-400">
+                {% if quiz.difficulty == 1 %} Easy
+                {% elif quiz.difficulty == 2 %} Medium
+                {% elif quiz.difficulty == 3 %} Hard
+                {% else %} Custom
+                {% endif %}
+              </span>
+            </td>
 
-<!-- Custom CSS -->
-<link rel="stylesheet" href="{% static 'css/allQuizes.css' %}">
+            <!-- Actions -->
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center items-center space-x-3">
+                {% if quiz.attempted %}
+                  <a href="{% url 'retake_quiz' quiz.id %}" class="icon-btn">
+                    <span class="material-symbols-outlined">refresh</span>
+                  </a>
+                  <a href="{% url 'quiz_result' quiz.attempt.id %}" class="icon-btn">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </a>
+                {% else %}
+                  <a href="{% url 'quiz_take' quiz.id %}" class="icon-btn">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                  </a>
+                {% endif %}
+                <a href="{% url 'quiz_detail' quiz.id %}" class="icon-btn">
+                  <span class="material-symbols-outlined">info</span>
+                </a>
 
-<ul style="padding:0;">
-{% for quiz in quizzes %}
-  <li class="quiz-card">
-    <div class="quiz-header">
-      <div class="quiz-title">
-        <i class="fa-solid fa-circle-question"></i> {{ quiz.topic }}
-      </div>
+                <!-- Share -->
+                <button type="button" class="icon-btn" onclick="openShareModal({{ quiz.id }})">
+                  <span class="material-symbols-outlined">share</span>
+                </button>
 
-      <!-- Meter -->
-      <div class="meter-container">
-        <div class="meter">
-          <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <linearGradient id="gradient-{{ quiz.id }}" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
-                <stop offset="25%" style="stop-color:#84cc16;stop-opacity:1" />
-                <stop offset="50%" style="stop-color:#eab308;stop-opacity:1" />
-                <stop offset="75%" style="stop-color:#f97316;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
-              </linearGradient>
-            </defs>
-            <path d="M 10 50 A 40 40 0 0 1 90 50" 
-                  fill="none" 
-                  stroke="url(#gradient-{{ quiz.id }})" 
-                  stroke-width="12" 
-                  stroke-linecap="round"/>
-          </svg>
-          <div class="needle" id="needle-{{ quiz.id }}"></div>
-        </div>
-        <div class="meter-labels">
-          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-        </div>
-      </div>
+                <!-- Delete -->
+                <a href="{% url 'delete_quiz' quiz.id %}" class="icon-btn text-red-500">
+                  <span class="material-symbols-outlined">delete</span>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="px-6 py-4 text-center text-slate-500 dark:text-slate-400">
+              No quizzes yet
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <div class="quiz-buttons">
-      {% if quiz.attempted %}
-        <a href="{% url 'retake_quiz' quiz.id %}" class="btn-retake">Retake Quiz</a>
-        <a href="{% url 'quiz_result' quiz.attempt.id %}" class="btn-result">Show Result</a>
-      {% else %}
-        <a href="{% url 'quiz_take' quiz.id %}" class="btn-start">Start Quiz</a>
-      {% endif %}
-      <a href="{% url 'quiz_detail' quiz.id %}" class="btn-detail">Quiz Detail</a>
-      <a href="{% url 'delete_quiz' quiz.id %}" class="btn-delete">Delete</a>
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex justify-center mt-4 space-x-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 rounded bg-primary text-white">Previous</a>
+    {% endif %}
 
-      <!-- Hidden Django form -->
-      <form id="share-form-{{ quiz.id }}" action="{% url 'share_quiz' quiz.id %}" method="post" style="display:none;">
-          {% csrf_token %}
-          <input type="hidden" name="username" id="username-{{ quiz.id }}">
-      </form>
+    <span class="px-3 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
 
-      <!-- SweetAlert trigger button -->
-      <button type="button" class="btn-share" onclick="openShareForm({{ quiz.id }})">Share</button>
-    </div>
-  </li>
-{% empty %}
-  <li class="quiz-card">
-    <span class="text-muted">No quizzes yet</span>
-  </li>
-{% endfor %}
-</ul>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 rounded bg-primary text-white">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</main>
 
-<!-- Custom JS -->
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex justify-center items-center">
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg w-96 p-6">
+    <h3 class="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-200">Share Quiz</h3>
+    <form id="shareForm" method="post" action="">
+      {% csrf_token %}
+      <input type="hidden" name="quiz_id" id="quizId">
+      <input type="text" name="username" placeholder="Enter username"
+             class="w-full px-3 py-2 border rounded mb-4 dark:bg-slate-700 dark:text-white">
+      <div class="flex justify-end space-x-2">
+        <button type="button" onclick="closeShareModal()" class="px-4 py-2 rounded bg-gray-300 dark:bg-gray-600">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded bg-primary text-white">Share</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="{% static 'js/allQuizes.js' %}"></script>
-<script>
-  // Initialize needles
-  {% for quiz in quizzes %}
-    rotateNeedle({{ quiz.id }}, {{ quiz.difficulty|default:1 }});
-  {% endfor %}
-</script>
-
 {% endblock content %}

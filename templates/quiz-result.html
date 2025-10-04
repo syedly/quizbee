@@ -1,36 +1,68 @@
 {% extends "base.html" %}
 {% block title %}Quiz Results{% endblock title %}
 {% load static %}
+
 {% block content %}
-<div style="max-width: 900px; margin: 30px auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+<div class="p-6 lg:p-10 space-y-8 max-w-6xl mx-auto">
 
-    <!-- Avatar + Score Section -->
-    <div style="text-align: center; margin-bottom: 30px;">
-        <img src="{% static 'images/grid.svg' %}" alt="User Avatar" 
-             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #4CAF50; margin-bottom: 15px;">
-        
-        <h2 style="margin: 0;">Results for {{ quiz.topic }}</h2>
-        <p style="font-size: 20px; margin-top: 10px;">
-            🎯 <b>Score: {{ attempt.score }} / {{ quiz.questions.count }}</b>
-        </p>
+  <!-- Score Overview -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="bg-white dark:bg-gray-800/30 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 text-center">
+      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Score</p>
+      <p class="text-4xl font-bold text-primary">
+        {{ attempt.score }} / {{ quiz.questions.count }}
+      </p>
     </div>
-
-    <!-- Questions Section -->
-    <h3 style="margin-bottom: 15px;">Your Answers:</h3>
-    {% for q in quiz.questions.all %}
-    <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 10px; background: #f9f9f9;">
-        <p style="font-weight: bold;">Q{{ forloop.counter }}: {{ q.text }}</p>
-
-        <p>✅ <b>Correct Answer:</b> {{ q.answer }}</p>
-        <p>📝 <b>Your Answer:</b> 
-            {% if attempt.answers.q.id == q.answer %}
-                <span style="color: green;">{{ attempt.answers.q.id|stringformat:"s" }} ✔</span>
-            {% else %}
-                <span style="color: red;">{{ attempt.answers.q.id|stringformat:"s" }} ✘</span>
-            {% endif %}
-        </p>
+    <div class="bg-white dark:bg-gray-800/30 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 text-center">
+      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Correct Answers</p>
+      <p class="text-4xl font-bold text-gray-900 dark:text-white">
+        {{ attempt.correct_count }}<span class="text-lg font-medium text-gray-400 dark:text-gray-500">/{{ quiz.questions.count }}</span>
+      </p>
     </div>
-    {% endfor %}
+    <div class="bg-white dark:bg-gray-800/30 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-800 text-center">
+      <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Incorrect Answers</p>
+      <p class="text-4xl font-bold text-gray-900 dark:text-white">
+        {{ attempt.incorrect_count }}<span class="text-lg font-medium text-gray-400 dark:text-gray-500">/{{ quiz.questions.count }}</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Detailed Breakdown -->
+  <div>
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Detailed Breakdown</h3>
+    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800/30">
+      <table class="w-full text-sm text-left">
+        <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-700 dark:text-gray-400 uppercase">
+          <tr>
+            <th class="px-6 py-3" scope="col">Question</th>
+            <th class="px-6 py-3" scope="col">Your Answer</th>
+            <th class="px-6 py-3" scope="col">Correct Answer</th>
+            <th class="px-6 py-3" scope="col">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in quiz.questions.all %}
+          {% with user_answer=attempt.answers.q.id %}
+          <tr class="border-b dark:border-gray-700 {% if user_answer != q.answer %} bg-red-50 dark:bg-red-900/20 {% endif %}">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">Q{{ forloop.counter }}: {{ q.text }}</td>
+            <td class="px-6 py-4 {% if user_answer != q.answer %} text-red-700 dark:text-red-400 {% endif %}">
+              {{ user_answer }}
+            </td>
+            <td class="px-6 py-4 text-green-700 dark:text-green-400">{{ q.answer }}</td>
+            <td class="px-6 py-4">
+              {% if user_answer == q.answer %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">Correct</span>
+              {% else %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300">Incorrect</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 </div>
 {% endblock content %}
