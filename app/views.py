@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
-from services import generate__quiz, check_short_answer
+from services import generate__quiz, check_short_answer, assistant
 from processing import fetch_text_from_url, extract_text_from_pdf
 from .models import Quiz, Question, Option, QuizAttempt
 from constants import (
@@ -13,6 +13,8 @@ from constants import (
     QUESTION_TYPES, DEFAULT_QUESTION_TYPE,
     CHOOSE_OPTIONS, DEFAULT_CHOOSE
 )
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 def index(request):
@@ -30,6 +32,26 @@ def handle_login(request):
             return HttpResponse('Invalid credentials! Please try again')
     return render(request, 'login.html')
 
+def change_username_or_email(request):
+    if request.method == "POST":
+        new_username = request.POST.get("new_username", "").strip()
+        new_email = request.POST.get("new_email", "").strip()
+
+        if new_username:
+            if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
+                return HttpResponse("Username already taken!", status=400)
+            request.user.username = new_username
+
+        if new_email:
+            if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+                return HttpResponse("Email already in use!", status=400)
+            request.user.email = new_email
+
+        request.user.save()
+        return HttpResponse("Profile updated successfully.")
+
+    return redirect("settings")
+
 def handle_signup(request):
     if request.method == 'POST':
         user = User.objects.create_user(
@@ -42,6 +64,15 @@ def handle_signup(request):
         user.save()
         return redirect('login')
     return render(request, 'signup.html')
+
+@csrf_exempt
+def chat_assistant(request):
+    if request.method == 'POST':
+        query = request.POST.get('query', '').strip()
+        if query:
+            response = assistant(query)
+            return JsonResponse({"response": response})
+    return JsonResponse({"error": "Invalid request"}, status=400)
 
 def handle_logout(request):
     logout(request)
@@ -124,6 +155,30 @@ def all_quizes(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'all-quizes.html', {'page_obj': page_obj})
+
+
+def change_password(request):
+    if request.method == "POST":
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_new_password")
+
+        # Check current password
+        if not request.user.check_password(current_password):
+            return HttpResponse("Current password is incorrect!", status=400)
+
+        # Confirm new passwords match
+        if new_password != confirm_password:
+            return HttpResponse("New passwords do not match!", status=400)
+
+        # Update password
+        request.user.set_password(new_password)
+        request.user.save()
+
+        # Redirect to login after password change (user is logged out)
+        return HttpResponse("Password changed successfully. Please log in again.")
+
+    return redirect("settings")
 
 
 def delete_quiz(request, **kwargs):

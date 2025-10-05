@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="{% static 'css/chatbox.css' %}">
 
   <style>
     body { font-family: 'Space Grotesk', sans-serif; }
@@ -18,9 +19,7 @@
     .tab-btn {
       @apply px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-sm font-medium bg-white dark:bg-gray-800 hover:bg-primary/10 dark:hover:bg-primary/20 transition;
     }
-    .tab-btn.active {
-      @apply bg-primary text-white;
-    }
+    .tab-btn.active { @apply bg-primary text-white; }
     .sidebar { transition: transform 0.3s ease-in-out; }
     .sidebar-closed { transform: translateX(-100%); }
   </style>
@@ -30,66 +29,57 @@
 <div class="flex min-h-screen">
 
   <!-- Sidebar -->
-<!-- Sidebar -->
-<aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-background-light/95 dark:bg-background-dark/95 p-4 z-50 md:relative md:translate-x-0 sidebar-closed md:flex flex-col justify-between">
-  <div>
-    <div class="flex items-center gap-3 mb-8">
-      {% comment %} <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style="background-image: url('{% static "images/logo.png" %}');"></div> {% endcomment %}
-      <h1 class="text-xl font-bold text-gray-900 dark:text-white">Quiz Hippo</h1>
+  <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 bg-background-light/95 dark:bg-background-dark/95 p-4 z-50 md:relative md:translate-x-0 sidebar-closed md:flex flex-col justify-between">
+    <div>
+      <div class="flex items-center gap-3 mb-8">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Quiz Hippo</h1>
+      </div>
+      <nav class="flex flex-col gap-2">
+        <a href="{% url 'main' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">home</span>
+          <span class="font-medium">Home</span>
+        </a>
+        <a href="{% url 'all_quizes' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+          <span class="material-symbols-outlined">description</span>
+          <span class="font-medium">My Quizzes</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+          <span class="material-symbols-outlined">explore</span>
+          <span class="font-medium">Explore</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+          <span class="material-symbols-outlined">group</span>
+          <span class="font-medium">Friends</span>
+        </a>
+        <a href="{% url "settings" %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+          <span class="material-symbols-outlined">settings</span>
+          <span class="font-medium">Settings</span>
+        </a>
+      </nav>
     </div>
-    <nav class="flex flex-col gap-2">
-      <a href="{% url 'main' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 dark:bg-primary/30 text-primary">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">home</span>
-        <span class="font-medium">Home</span>
-      </a>
-      <a href="{% url 'all_quizes' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
-        <span class="material-symbols-outlined">description</span>
-        <span class="font-medium">My Quizzes</span>
-      </a>
-      <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
-        <span class="material-symbols-outlined">explore</span>
-        <span class="font-medium">Explore</span>
-      </a>
-      <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
-        <span class="material-symbols-outlined">group</span>
-        <span class="font-medium">Friends</span>
-      </a>
-      <a href="{% url "settings" %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
-        <span class="material-symbols-outlined">settings</span>
-        <span class="font-medium">Settings</span>
-      </a>
-    </nav>
-  </div>
 
-  <!-- Bottom Buttons (stay at bottom always) -->
-  <div class="mt-6 space-y-3">
-    <!-- New Quiz Button -->
-    <button class="flex w-full items-center justify-center gap-2 rounded-lg h-12 px-4 bg-primary text-white font-bold shadow-lg hover:bg-primary/90 transition">
-      <span class="material-symbols-outlined">add_circle</span>
-      <span class="truncate">New Quiz</span>
-    </button>
-
-    <!-- Logout Button -->
-    <form method="post" action="{% url 'logout' %}">
-      {% csrf_token %}
-      <button type="submit" 
-              class="flex w-full items-center justify-center gap-2 rounded-lg h-12 px-4 
-                     bg-red-600 text-white font-bold shadow-lg hover:bg-red-700 transition">
-        <span class="material-symbols-outlined">logout</span>
-        <span class="truncate">Logout</span>
+    <!-- Bottom Buttons -->
+    <div class="mt-6 space-y-3">
+      <button class="flex w-full items-center justify-center gap-2 rounded-lg h-12 px-4 bg-primary text-white font-bold shadow-lg hover:bg-primary/90 transition">
+        <span class="material-symbols-outlined">add_circle</span>
+        <span class="truncate">New Quiz</span>
       </button>
-    </form>
-  </div>
-</aside>
 
-
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg h-12 px-4 bg-red-600 text-white font-bold shadow-lg hover:bg-red-700 transition">
+          <span class="material-symbols-outlined">logout</span>
+          <span class="truncate">Logout</span>
+        </button>
+      </form>
+    </div>
+  </aside>
 
   <!-- Overlay for mobile -->
   <div id="overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
 
   <!-- Main Content -->
   <div class="flex flex-col flex-1">
-    <!-- Mobile header -->
     <header class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 md:hidden">
       <h1 class="text-lg font-bold text-gray-900 dark:text-white">Quiz Hippo</h1>
       <button id="menuBtn" class="p-2 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20">
@@ -102,8 +92,76 @@
     </main>
   </div>
 </div>
-<script src="{% static 'js/base.js' %}"></script>
 
+<!-- Floating Chat Button -->
+<button id="chatToggle"
+        class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-110 transition">
+  💬
+</button>
+
+<!-- Chat Modal -->
+<div id="chatModal"
+     class="fixed bottom-20 right-6 w-80 h-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl transform translate-x-full transition-all duration-300 flex flex-col">
+  <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+    <h2 class="font-bold text-gray-800 dark:text-white">Quiz Hippo Chat</h2>
+    <button id="closeChat" class="text-gray-500 hover:text-red-500">&times;</button>
+  </div>
+  <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-2 text-sm">
+    <div class="bg-gray-200 dark:bg-gray-700 p-2 rounded-lg self-start max-w-[70%]">
+      Hello! How can I help you today?
+    </div>
+  </div>
+  <form id="chatForm" class="p-3 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+    <input name="query" id="chatInput" type="text" placeholder="Type a message..."
+           class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white"/>
+    <button type="submit" class="bg-primary text-white px-4 rounded-lg">Send</button>
+  </form>
+</div>
+
+<script>
+document.getElementById("chatForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    let input = document.getElementById("chatInput");
+    let message = input.value.trim();
+    if (!message) return;
+
+    let chatBox = document.getElementById("chatMessages");
+
+    // Append user message
+    let userMsg = document.createElement("div");
+    userMsg.className = "bg-blue-500 text-white p-2 rounded-lg self-end max-w-[70%]";
+    userMsg.innerText = message;
+    chatBox.appendChild(userMsg);
+
+    input.value = "";
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Send to Django backend
+    let formData = new FormData();
+    formData.append("query", message);
+
+    try {
+        let response = await fetch("/chat-assistant/", {
+            method: "POST",
+            body: formData
+        });
+        let data = await response.json();
+
+        let botMsg = document.createElement("div");
+        botMsg.className = "bg-gray-200 dark:bg-gray-700 p-2 rounded-lg self-start max-w-[70%]";
+        botMsg.innerText = data.response || "Error: No response";
+        chatBox.appendChild(botMsg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    } catch (err) {
+        console.error(err);
+    }
+});
+</script>
+
+
+<script src="{% static 'js/base.js' %}"></script>
+<script src="{% static 'js/chatbox.js' %}"></script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
