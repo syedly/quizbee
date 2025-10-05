@@ -19,5 +19,5 @@ urlpatterns = [
     path("quiz/<int:quiz_id>/is-public/", views.is_public, name="is_public"),
     path('change_password/', views.change_password, name='change_password'),
     path("chat-assistant/", views.chat_assistant, name="chat_assistant"),
-    path('change_username_or_email/', views.change_username_or_email, name='change_username_or_email'),
+    path("change-profile/", views.change_username_or_email, name="change_username_or_email"),
 ]

@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer, assistant
 from processing import fetch_text_from_url, extract_text_from_pdf
-from .models import Quiz, Question, Option, QuizAttempt
+from .models import Quiz, Question, Option, QuizAttempt, UserProfile
 from constants import (
     LANGUAGES, DEFAULT_LANGUAGE,
     DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY,
@@ -32,22 +32,52 @@ def handle_login(request):
             return HttpResponse('Invalid credentials! Please try again')
     return render(request, 'login.html')
 
+# def change_username_or_email(request):
+#     if request.method == "POST":
+#         new_username = request.POST.get("new_username", "").strip()
+#         new_email = request.POST.get("new_email", "").strip()
+
+#         if new_username:
+#             if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
+#                 return HttpResponse("Username already taken!", status=400)
+#             request.user.username = new_username
+
+#         if new_email:
+#             if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+#                 return HttpResponse("Email already in use!", status=400)
+#             request.user.email = new_email
+
+#         request.user.save()
+#         return HttpResponse("Profile updated successfully.")
+
+#     return redirect("settings")
+
 def change_username_or_email(request):
     if request.method == "POST":
         new_username = request.POST.get("new_username", "").strip()
         new_email = request.POST.get("new_email", "").strip()
+        profile_image = request.FILES.get("profile_image")  # 👈 Handle image
 
+        # Update username
         if new_username:
             if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
                 return HttpResponse("Username already taken!", status=400)
             request.user.username = new_username
 
+        # Update email
         if new_email:
             if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
                 return HttpResponse("Email already in use!", status=400)
             request.user.email = new_email
 
         request.user.save()
+
+        # Update profile image
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        if profile_image:
+            profile.avatar = profile_image
+            profile.save()
+
         return HttpResponse("Profile updated successfully.")
 
     return redirect("settings")
