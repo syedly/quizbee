@@ -39,6 +39,10 @@
           <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">home</span>
           <span class="font-medium">Home</span>
         </a>
+        <a href="{% url 'profile' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
+          <span class="material-symbols-outlined">person</span>
+          <span class="font-medium">Profile</span>
+        </a>
         <a href="{% url 'all_quizes' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20">
           <span class="material-symbols-outlined">description</span>
           <span class="font-medium">My Quizzes</span>
@@ -108,7 +112,7 @@
   </div>
   <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-2 text-sm">
     <div class="bg-gray-200 dark:bg-gray-700 p-2 rounded-lg self-start max-w-[70%]">
-      Hello! How can I help you today?
+      Hello! {{ user.username }} How can I help you today?
     </div>
   </div>
   <form id="chatForm" class="p-3 border-t border-gray-200 dark:border-gray-700 flex gap-2">

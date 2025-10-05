@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="flex min-h-screen">
+  <main class="flex-1">
+    <div class="flex flex-col">
+
+      <!-- Mobile Header -->
+      <header class="sticky top-0 z-10 flex items-center justify-between p-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm lg:hidden">
+        <div class="flex items-center gap-3">
+          <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8" 
+               style='background-image: url("{% static "images/default-profile.png" %}");'>
+          </div>
+          <h1 class="text-lg font-bold text-slate-900 dark:text-white">Quiz Hippo</h1>
+        </div>
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-800/60">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </header>
+
+      <!-- Main Content -->
+      <div class="p-4 sm:p-6 lg:p-8">
+        <div class="max-w-4xl mx-auto">
+
+          <!-- Page Title -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Profile</h1>
+            <p class="text-slate-600 dark:text-slate-400 mt-1">
+              Manage your account settings and view your quiz statistics.
+            </p>
+          </div>
+
+          <!-- Profile Card -->
+          <div class="flex flex-col @container sm:flex-row items-center gap-6 p-6 rounded-xl bg-slate-200/40 dark:bg-slate-800/40 mb-8">
+            <div class="flex-shrink-0">
+              {% if user.userprofile.avatar %}
+                <img src="{{ user.userprofile.avatar.url }}" 
+                     alt="{{ user.first_name|default:''|slice:':1' }}{{ user.last_name|default:''|slice:':1' }}" 
+                     class="w-24 h-24 rounded-full mb-3">
+              {% else %}
+                <img src="{% static 'images/hippo.png' %}" 
+                     alt="{{ user.first_name|default:''|slice:':1' }}{{ user.last_name|default:''|slice:':1' }}" 
+                     class="w-24 h-24 rounded-full mb-3">
+              {% endif %}
+            </div>
+
+            <div class="flex-1 text-center sm:text-left">
+              <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ user.get_full_name|default:user.username }}</h2>
+              <p class="text-slate-600 dark:text-slate-400">{{ user.email }}</p>
+            </div>
+
+            <a href="{% url "settings" %}" 
+               class="w-full @[320px]:w-auto flex-shrink-0 h-10 px-6 bg-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all">
+              Edit Profile
+            </a>
+          </div>
+
+          <!-- Quiz Stats -->
+          <div class="mb-8">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Quiz Statistics</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="p-6 rounded-xl bg-slate-200/40 dark:bg-slate-800/40">
+                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Quizzes Created</p>
+                <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1">{{ quizzes_created|default:"0" }}</p>
+              </div>
+              <div class="p-6 rounded-xl bg-slate-200/40 dark:bg-slate-800/40">
+                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Quizzes Completed</p>
+                <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1">{{ quizzes_completed|default:"0" }}</p>
+              </div>
+              <div class="p-6 rounded-xl bg-slate-200/40 dark:bg-slate-800/40">
+                <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Best Score</p>
+                <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1">{{ best_score|default:"0%" }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Settings -->
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Account Settings</h2>
+            <div class="divide-y divide-slate-200/80 dark:divide-slate-800/80 rounded-xl overflow-hidden bg-slate-200/40 dark:bg-slate-800/40">
+
+              <!-- Password -->
+              <div class="flex items-center justify-between p-4">
+                <div>
+                  <p class="font-medium text-slate-800 dark:text-slate-200">Password</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">Change your password</p>
+                </div>
+                <a href="" 
+                   class="h-8 px-4 text-sm font-bold rounded-lg bg-slate-300/80 dark:bg-slate-700/80 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                  Change
+                </a>
+              </div>
+
+              <!-- Notifications -->
+              <div class="flex items-center justify-between p-4">
+                <div>
+                  <p class="font-medium text-slate-800 dark:text-slate-200">Notifications</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-400">Manage your email notifications</p>
+                </div>
+                <a href="" 
+                   class="h-8 px-4 text-sm font-bold rounded-lg bg-slate-300/80 dark:bg-slate-700/80 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                  Manage
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logout -->
+          <div class="mt-8 flex justify-start">
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" 
+                      class="h-10 px-6 text-sm font-bold rounded-lg bg-red-500/10 dark:bg-red-500/20 text-red-500 hover:bg-red-500/20 dark:hover:bg-red-500/30 transition-colors">
+                Log Out
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

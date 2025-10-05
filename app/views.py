@@ -15,10 +15,16 @@ from constants import (
 )
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Max
 
 
 def index(request):
     return render(request, 'index.html')
+
+def delete_account(request):
+    user = request.user
+    user.delete()
+    return redirect("index")
 
 def handle_login(request):
     if request.method == 'POST':
@@ -31,6 +37,20 @@ def handle_login(request):
         else:
             return HttpResponse('Invalid credentials! Please try again')
     return render(request, 'login.html')
+
+
+def profile(request):
+    quizzes_created = Quiz.objects.filter(user=request.user).count()
+    quizzes_completed = QuizAttempt.objects.filter(user=request.user).count()
+    best_score = QuizAttempt.objects.filter(user=request.user).aggregate(
+        Max('score')
+    )['score__max'] or 0
+
+    return render(request, 'profile.html', {
+        'quizzes_created': quizzes_created,
+        'quizzes_completed': quizzes_completed,
+        'best_score': f"{best_score}%",
+    })
 
 # def change_username_or_email(request):
 #     if request.method == "POST":
@@ -574,6 +594,4 @@ def retake_quiz(request, quiz_id):
         attempt.save()
 
         return redirect("quiz_result", attempt_id=attempt.id)
-
-    return render(request, "quiz-take.html", {"quiz": quiz, "questions": quiz.questions.all()})
 

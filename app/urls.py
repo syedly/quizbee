@@ -20,4 +20,6 @@ urlpatterns = [
     path('change_password/', views.change_password, name='change_password'),
     path("chat-assistant/", views.chat_assistant, name="chat_assistant"),
     path("change-profile/", views.change_username_or_email, name="change_username_or_email"),
+    path("profile/", views.profile, name="profile"),
+    path("delete_account/", views.delete_account, name="delete_account"),
 ]
