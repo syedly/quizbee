@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex min-h-screen">
+  <main class="flex-1">
+    <!-- Header -->
+    <header class="flex items-center justify-between h-16 px-4 md:px-8 border-b border-gray-200 dark:border-gray-800">
+      <div class="flex items-center gap-4">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Explore</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="relative hidden md:block">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+            </svg>
+          </div>
+          <input class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Search" type="text"/>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="p-4 md:p-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Quiz List -->
+        <div class="lg:col-span-2 space-y-6">
+          {% for quiz in quizzes %}
+          <div class="group bg-gray-100 dark:bg-gray-800/50 rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ quiz.topic }}</h3>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Difficulty: {{ quiz.difficulty }}</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">{{ quiz.description }}</p>
+
+            <!-- Rating and Add Button Row -->
+            <div class="flex items-center justify-between mt-3">
+              <!-- Average Rating with Stars -->
+              <div class="flex items-center gap-1 text-primary">
+                {% if quiz.avg_rating %}
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= quiz.avg_rating|floatformat:0 %}
+                      ★
+                    {% else %}
+                      ☆
+                    {% endif %}
+                  {% endfor %}
+                  <span class="ml-2 text-gray-800 dark:text-gray-200">{{ quiz.avg_rating|floatformat:1 }} / 5</span>
+                {% else %}
+                  <span class="text-gray-500 dark:text-gray-400">No ratings yet</span>
+                {% endif %}
+              </div>
+
+              <!-- Add to My Quiz Button -->
+              <form method="POST" action="{% url 'add_to_my_quiz' quiz.id %}">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors">
+                  Add to My Quiz
+                </button>
+              </form>
+            </div>
+
+            <!-- Rating Form (Stars Only) -->
+            <form method="POST" action="{% url 'rate_quiz' quiz.id %}" class="flex gap-1 mt-3">
+              {% csrf_token %}
+              {% for star in "12345" %}
+                <label class="cursor-pointer text-2xl text-gray-300 hover:text-primary transition-colors">
+                  <input type="radio" name="rating" value="{{ star }}" class="hidden" required>
+                  ★
+                </label>
+              {% endfor %}
+              <button type="submit" class="ml-4 px-3 py-1 bg-primary text-white rounded-lg">Rate</button>
+            </form>
+
+          </div>
+          {% empty %}
+            <p class="text-gray-500 dark:text-gray-400">No quizzes available.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="space-y-6">
+          <div class="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-xl">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Filters</h3>
+            <nav class="space-y-2">
+              <a class="block w-full text-left px-4 py-2 rounded-lg bg-primary text-white font-medium" href="#">Trending</a>
+              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="#">Explore</a>
+              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="#">For You</a>
+            </nav>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- JS to highlight stars with primary color -->
+<script>
+document.querySelectorAll('form').forEach(form => {
+  const stars = form.querySelectorAll('input[name="rating"]');
+  stars.forEach(star => {
+    star.addEventListener('change', e => {
+      stars.forEach(s => s.parentElement.classList.remove('text-primary'));
+      for (let i = 0; i < star.value; i++) {
+        stars[i].parentElement.classList.add('text-primary');
+      }
+    });
+  });
+});
+</script>
+
+{% endblock %}

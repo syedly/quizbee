@@ -22,4 +22,7 @@ urlpatterns = [
     path("change-profile/", views.change_username_or_email, name="change_username_or_email"),
     path("profile/", views.profile, name="profile"),
     path("delete_account/", views.delete_account, name="delete_account"),
+    path("quiz/<int:quiz_id>/rate/", views.rate_quiz, name="rate_quiz"),
+    path("explore/", views.explore, name="explore"),
+    path("add_to_my_quiz/<int:quiz_id>/", views.add_to_my_quiz, name="add_to_my_quiz"),
 ]

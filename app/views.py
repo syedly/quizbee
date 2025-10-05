@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer, assistant
 from processing import fetch_text_from_url, extract_text_from_pdf
-from .models import Quiz, Question, Option, QuizAttempt, UserProfile
+from .models import Quiz, Question, Option, QuizAttempt, UserProfile, QuizRating
 from constants import (
     LANGUAGES, DEFAULT_LANGUAGE,
     DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY,
@@ -16,6 +16,7 @@ from constants import (
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Max
+from django.db.models import Avg
 
 
 def index(request):
@@ -595,3 +596,38 @@ def retake_quiz(request, quiz_id):
 
         return redirect("quiz_result", attempt_id=attempt.id)
 
+def explore(request):
+    # Only fetch quizzes that are public
+    quizzes = Quiz.objects.filter(is_public=True).annotate(
+        avg_rating=Avg('ratings__rating')
+    )
+    return render(request, 'explore.html', {'quizzes': quizzes})
+
+def rate_quiz(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    if request.method == "POST":
+        rating_value = int(request.POST.get("rating", 0))
+
+        if 1 <= rating_value <= 5:
+            QuizRating.objects.update_or_create(
+                quiz=quiz,
+                user=request.user,
+                defaults={"rating": rating_value},
+            )
+
+    return redirect("explore")
+
+def add_to_my_quiz(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    # Add current user to the shared_with ManyToMany field
+    if request.user in quiz.shared_with.all():
+        # messages.info(request, "This quiz is already in your list.")
+        pass
+    else:
+        quiz.shared_with.add(request.user)
+        # messages.success(request, "Quiz added to your list successfully!")
+    
+    # Redirect back to the same page (or anywhere you want)
+    return redirect(request.META.get('HTTP_REFERER', '/'))
