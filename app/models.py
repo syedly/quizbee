@@ -1,5 +1,7 @@
 # quizapp/models.py
 from django.db import models
+import uuid
+from django.db import models
 from django.contrib.auth.models import User
 
 class UserProfile(models.Model):
@@ -89,3 +91,28 @@ class QuizAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.quiz.topic} ({self.score})"
+
+class Server(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    code = models.CharField(max_length=8, unique=True, editable=False)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="servers")
+    members = models.ManyToManyField(User, related_name="joined_servers", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = str(uuid.uuid4())[:8].upper()  # unique join code
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class ServerQuiz(models.Model):
+    server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name="quizzes")
+    quiz = models.ForeignKey('Quiz', on_delete=models.CASCADE)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.quiz.topic} → {self.server.name}"

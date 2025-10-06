@@ -25,4 +25,9 @@ urlpatterns = [
     path("quiz/<int:quiz_id>/rate/", views.rate_quiz, name="rate_quiz"),
     path("explore/", views.explore, name="explore"),
     path("add_to_my_quiz/<int:quiz_id>/", views.add_to_my_quiz, name="add_to_my_quiz"),
+    path('servers/', views.server_list, name='server_list'),
+    path('servers/create/', views.create_server, name='create_server'),
+    path('servers/join/', views.join_server, name='join_server'),
+    path('servers/<int:server_id>/', views.server_detail, name='server_detail'),
+    path("server/<int:server_id>/add-quiz/", views.add_quiz_to_server, name="add_quiz_to_server"),
 ]

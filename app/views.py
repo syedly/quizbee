@@ -6,18 +6,24 @@ from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer, assistant
 from processing import fetch_text_from_url, extract_text_from_pdf
-from .models import Quiz, Question, Option, QuizAttempt, UserProfile, QuizRating
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Max
+from django.db.models import Avg
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import (
+    Quiz, Question, 
+    Option, QuizAttempt, 
+    UserProfile, QuizRating, 
+    Server, ServerQuiz
+)
 from constants import (
     LANGUAGES, DEFAULT_LANGUAGE,
     DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY,
     QUESTION_TYPES, DEFAULT_QUESTION_TYPE,
     CHOOSE_OPTIONS, DEFAULT_CHOOSE
 )
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Max
-from django.db.models import Avg
-
 
 def index(request):
     return render(request, 'index.html')
@@ -631,3 +637,51 @@ def add_to_my_quiz(request, quiz_id):
     
     # Redirect back to the same page (or anywhere you want)
     return redirect(request.META.get('HTTP_REFERER', '/'))
+
+@login_required
+def server_list(request):
+    user_servers = request.user.joined_servers.all()
+    return render(request, 'server_list.html', {'servers': user_servers})
+
+@login_required
+def create_server(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        desc = request.POST.get("description")
+        server = Server.objects.create(name=name, description=desc, created_by=request.user)
+        server.members.add(request.user)
+        messages.success(request, f"Server '{name}' created successfully! Code: {server.code}")
+        return redirect("server_list")
+    return render(request, 'create_server.html')
+
+@login_required
+def join_server(request):
+    if request.method == "POST":
+        code = request.POST.get("code").strip().upper()
+        try:
+            server = Server.objects.get(code=code)
+            server.members.add(request.user)
+            messages.success(request, f"Joined {server.name} successfully!")
+            return redirect("server_detail", server.id)
+        except Server.DoesNotExist:
+            messages.error(request, "Invalid code!")
+    return redirect("server_list")
+
+@login_required
+def server_detail(request, server_id):
+    quizes = Quiz.objects.filter(user=request.user)  # rename variable
+    server = get_object_or_404(Server, id=server_id)
+    quizzes = server.quizzes.all()
+    return render(request, 'server_detail.html', {'server': server, 'quizzes': quizzes, 'quizes': quizes})
+
+def add_quiz_to_server(request, server_id):
+    server = get_object_or_404(Server, id=server_id)
+
+    if request.user != server.created_by:
+        return redirect("server_detail", server_id=server.id)
+
+    if request.method == "POST":
+        quiz_id = request.POST.get("quiz_id")
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        ServerQuiz.objects.create(server=server, quiz=quiz)
+        return redirect("server_detail", server_id=server.id)
