@@ -28,6 +28,10 @@
       <li class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
         <span class="font-semibold">{{ sq.quiz.topic }}</span>
         <span class="text-sm text-gray-500">({{ sq.quiz.difficulty }})</span>
+            <a href="{% url 'quiz_take' sq.quiz.id %}" 
+       class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+       Take Quiz
+    </a>
       </li>
     {% empty %}
       <p class="text-gray-500">No quizzes assigned yet.</p>

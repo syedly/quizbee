@@ -46,38 +46,39 @@ def handle_login(request):
     return render(request, 'login.html')
 
 
+# def profile(request):
+#     servers = Server.objects.filter(created_by=request.user)
+#     quizzes_created = Quiz.objects.filter(user=request.user).count()
+#     quizzes_completed = QuizAttempt.objects.filter(user=request.user).count()
+#     best_score = QuizAttempt.objects.filter(user=request.user).aggregate(
+#         Max('score')
+#     )['score__max'] or 0
+
+#     return render(request, 'profile.html', {
+#         'servers': servers,
+#         'quizzes_created': quizzes_created,
+#         'quizzes_completed': quizzes_completed,
+#         'best_score': f"{best_score}%",
+#     })
 def profile(request):
+    servers = Server.objects.filter(created_by=request.user)
     quizzes_created = Quiz.objects.filter(user=request.user).count()
     quizzes_completed = QuizAttempt.objects.filter(user=request.user).count()
     best_score = QuizAttempt.objects.filter(user=request.user).aggregate(
         Max('score')
     )['score__max'] or 0
 
+    # ✅ Fetch attempts for quizzes in the user's servers
+    server_quizzes = ServerQuiz.objects.filter(server__in=servers).values_list('quiz', flat=True)
+    attempts = QuizAttempt.objects.filter(quiz__in=server_quizzes).select_related('user', 'quiz')
+
     return render(request, 'profile.html', {
+        'servers': servers,
+        'attempts': attempts,  # ✅ added context
         'quizzes_created': quizzes_created,
         'quizzes_completed': quizzes_completed,
         'best_score': f"{best_score}%",
     })
-
-# def change_username_or_email(request):
-#     if request.method == "POST":
-#         new_username = request.POST.get("new_username", "").strip()
-#         new_email = request.POST.get("new_email", "").strip()
-
-#         if new_username:
-#             if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
-#                 return HttpResponse("Username already taken!", status=400)
-#             request.user.username = new_username
-
-#         if new_email:
-#             if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
-#                 return HttpResponse("Email already in use!", status=400)
-#             request.user.email = new_email
-
-#         request.user.save()
-#         return HttpResponse("Profile updated successfully.")
-
-#     return redirect("settings")
 
 def change_username_or_email(request):
     if request.method == "POST":
@@ -91,7 +92,6 @@ def change_username_or_email(request):
                 return HttpResponse("Username already taken!", status=400)
             request.user.username = new_username
 
-        # Update email
         if new_email:
             if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
                 return HttpResponse("Email already in use!", status=400)
@@ -99,7 +99,6 @@ def change_username_or_email(request):
 
         request.user.save()
 
-        # Update profile image
         profile, created = UserProfile.objects.get_or_create(user=request.user)
         if profile_image:
             profile.avatar = profile_image
@@ -155,48 +154,19 @@ def main(request):
         {
             'quizzes': quizzes,
 
-            # languages
             'languages': LANGUAGES,
             'default_language': DEFAULT_LANGUAGE,
 
-            # difficulty levels
             'levels': DIFFICULTY_LEVELS,
             'default_level': DEFAULT_DIFFICULTY,
 
-            # question types
             'question_types': QUESTION_TYPES,
             'default_type': DEFAULT_QUESTION_TYPE,
 
-            # choose options
             'choose_options': CHOOSE_OPTIONS,
             'default_choose': DEFAULT_CHOOSE,
         }
     )
-
-# def all_quizes(request):
-#     user = request.user
-#     quizzes = Quiz.objects.all()  # show all quizzes
-
-#     # Get all quiz IDs that the user has attempted
-#     attempted_quizzes = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
-
-#     # Attach attempted flag
-#     for quiz in quizzes:
-#         quiz.attempted = quiz.id in attempted_quizzes
-
-#     return render(request, 'all-quizes.html', {'quizzes': quizzes})
-
-# def all_quizes(request):
-#     user = request.user
-#     quizzes = Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)
-
-#     for quiz in quizzes:
-#         attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
-#         quiz.attempt = attempt   # attach attempt (or None)
-#         quiz.attempted = attempt is not None
-
-#     return render(request, 'all-quizes.html', {'quizzes': quizzes})
-
 
 def all_quizes(request):
     user = request.user
@@ -220,22 +190,60 @@ def change_password(request):
         new_password = request.POST.get("new_password")
         confirm_password = request.POST.get("confirm_new_password")
 
-        # Check current password
         if not request.user.check_password(current_password):
             return HttpResponse("Current password is incorrect!", status=400)
 
-        # Confirm new passwords match
         if new_password != confirm_password:
             return HttpResponse("New passwords do not match!", status=400)
 
-        # Update password
         request.user.set_password(new_password)
         request.user.save()
 
-        # Redirect to login after password change (user is logged out)
         return HttpResponse("Password changed successfully. Please log in again.")
 
     return redirect("settings")
+
+def delete_server(request, server_id):
+    server = get_object_or_404(Server, id=server_id)
+    if request.user == server.created_by:
+        server.delete()
+    return redirect("profile")
+
+def show_members(request, server_id):
+    server = get_object_or_404(Server, id=server_id)
+    members = server.members.all()
+    return render(request, 'profile.html', {'server': server, 'members': members})
+
+
+def show_server_quiz_results(request, server_id):
+    # Get server created by the current user (only server owner can view)
+    server = get_object_or_404(Server, id=server_id, created_by=request.user)
+
+    # Get quizzes assigned to this server
+    server_quizzes = ServerQuiz.objects.filter(server=server).select_related('quiz')
+
+    # Get all members of the server
+    members = server.members.all()
+
+    # Create a structured data dictionary
+    results_data = []
+
+    for sq in server_quizzes:
+        quiz = sq.quiz
+
+        # Get attempts made by members for this quiz
+        attempts = QuizAttempt.objects.filter(quiz=quiz, user__in=members).select_related('user')
+
+        # Append quiz + attempts info
+        results_data.append({
+            "quiz": quiz,
+            "attempts": attempts
+        })
+
+    return render(request, "server_results.html", {
+        "server": server,
+        "results_data": results_data,
+    })
 
 
 def delete_quiz(request, **kwargs):
@@ -252,7 +260,7 @@ def share_quiz(request, quiz_id):
         username = request.POST.get("username")
         try:
             user_to_share = User.objects.get(username=username)
-            quiz.shared_with.add(user_to_share)  # add user to shared list
+            quiz.shared_with.add(user_to_share) 
         except User.DoesNotExist:
             return HttpResponse(f"User '{username}' does not exist!")
 
@@ -260,18 +268,13 @@ def share_quiz(request, quiz_id):
 
     return redirect("all_quizes")
 
-# -----------------------------
-# Parser / save helpers
-# -----------------------------
 def parse_quiz_response(response_text):
     response_text = (response_text or "").strip()
 
-    # Topic + global difficulty
     topic_match = re.search(r"Topic:\s*(.+?)\s*\(Difficulty\s*(\d+)\)", response_text, re.IGNORECASE)
     topic = topic_match.group(1).strip() if topic_match else "Untitled Quiz"
     quiz_difficulty = int(topic_match.group(2)) if topic_match else 1
 
-    # Questions block
     questions_part = ""
     answers_part = ""
     difficulty_part = ""
@@ -289,18 +292,15 @@ def parse_quiz_response(response_text):
             questions_part = ""
             answers_part = ""
 
-    # split question blocks by numbered lines (1., 2., etc.)
     question_blocks = re.split(r"\n\s*\d+\.\s*", questions_part)
     if question_blocks and question_blocks[0].strip() == "":
         question_blocks = question_blocks[1:]
 
-    # parse answers
     answers = re.findall(r"\d+\.\s*(.+)", answers_part) if answers_part else []
-    # fallback: sometimes answers are like "1. (b) 4"
+
     if not answers and answers_part:
         answers = [line.strip() for line in answers_part.splitlines() if line.strip()]
 
-    # parse difficulties per question
     difficulties = {}
     if difficulty_part:
         for line in difficulty_part.splitlines():
@@ -321,11 +321,9 @@ def parse_quiz_response(response_text):
         if not text:
             continue
 
-        # Detect MCQ options within the question block: lines starting with (a), (b) or "a)" style
         mcq_option_pattern = r"(?:\([a-z]\)|[a-z]\))\s*([^\n\r]+)"
         mcq_options = re.findall(mcq_option_pattern, text, flags=re.IGNORECASE)
 
-        # Determine type
         if re.search(r"True or False|True/False|True or false", text, re.IGNORECASE):
             q_type = "TF"
         elif mcq_options:
@@ -335,11 +333,8 @@ def parse_quiz_response(response_text):
         else:
             q_type = "SHORT"
 
-        # Clean question text: remove option lines if MCQ
         if q_type == "MCQ":
-            # split question text and options
             parts = re.split(r"(?:\n|\r\n)", text)
-            # keep lines that are not the option lines for question text
             non_option_lines = [p for p in parts if not re.match(r"^\s*(?:\([a-z]\)|[a-z]\))", p, re.IGNORECASE)]
             question_text_clean = " ".join(non_option_lines).strip()
         else:
@@ -350,7 +345,7 @@ def parse_quiz_response(response_text):
             answer_text = answers[idx-1].strip()
         parsed_questions.append({
             "text": question_text_clean,
-            "raw_text": text,            # raw block (useful for options)
+            "raw_text": text,            
             "type": q_type,
             "answer": answer_text,
             "difficulty": difficulties.get(idx, quiz_difficulty),
@@ -378,98 +373,28 @@ def save_quiz_to_db(parsed_quiz):
             answer=q["answer"]
         )
 
-        # Save options found by parser (preferred)
         if q["type"] == "MCQ" and q.get("mcq_options"):
             for opt in q["mcq_options"]:
                 Option.objects.create(question=question, text=opt.strip())
         else:
-            # fallback: try to extract (a) (b) lines from raw_text if any
             opts = re.findall(r"(?:\([a-d]\)|[a-d]\))\s*([^\n\r]+)", q.get("raw_text", ""), flags=re.IGNORECASE)
             for opt in opts:
                 Option.objects.create(question=question, text=opt.strip())
 
     return quiz
 
-# The single generate_quiz view used by the template
-# def generate_quiz(request):
-#     if request.method == 'POST':
-#         topic = request.POST.get('topic', 'General')
-#         language = request.POST.get('language', 'English')
-#         num_questions = request.POST.get('num_questions', '5')
-#         difficulty = request.POST.get('difficulty', '1')
-#         question_preference = request.POST.get('question_preference', 'MIX')
-
-#         # Extra fields
-#         prompt = request.POST.get('prompt', '').strip()
-#         url = request.POST.get('url', '').strip()
-#         text = request.POST.get('text', '').strip()
-#         upload_file = request.FILES.get('file')
-
-#         # Decide the source of content
-#         content_source = None
-#         if prompt:
-#             content_source = prompt
-#         elif url:
-#             content_source = content_source = fetch_text_from_url(url)
-#         elif text:
-#             content_source = text
-#         elif upload_file and upload_file.name.endswith(".pdf"):
-#             content_source = extract_text_from_pdf(upload_file)
-#         else:
-#             content_source = topic  # fallback to topic if nothing else
-
-#         # Now send everything to your generator
-#         raw_quiz = generate__quiz(
-#             topic=topic,
-#             language=language,
-#             num_questions=num_questions,
-#             difficulty=difficulty,
-#             question_type=question_preference,
-#             content=content_source  # <-- NEW argument
-#         )
-
-#         parsed_quiz = parse_quiz_response(raw_quiz)
-
-#         quiz = Quiz.objects.create(
-#             topic=parsed_quiz["topic"],
-#             difficulty=parsed_quiz["difficulty"],
-#             user=request.user if request.user.is_authenticated else None,
-#             question_preference=question_preference
-#         )
-
-#         # Save questions
-#         for q in parsed_quiz["questions"]:
-#             question = Question.objects.create(
-#                 quiz=quiz,
-#                 text=q["text"],
-#                 question_type=q["type"],
-#                 difficulty=q["difficulty"],
-#                 answer=q["answer"]
-#             )
-#             if q["type"] == "MCQ" and q.get("mcq_options"):
-#                 for opt in q["mcq_options"]:
-#                     Option.objects.create(question=question, text=opt.strip())
-
-#         quizzes = Quiz.objects.all().order_by('-id')[:20]
-#         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
-
-#     return redirect('main')
 def generate_quiz(request):
     if request.method == 'POST':
-        # Basic settings
         topic = request.POST.get('topic', 'General')
         language = request.POST.get('language', 'English')
-        num_questions = request.POST.get('quiz_count', '5')   # template uses quiz_count
+        num_questions = request.POST.get('quiz_count', '5')   
         difficulty = request.POST.get('difficulty', '1')
-        question_preference = request.POST.get('quiz_type', 'MIX')  # template uses quiz_type
-
-        # Extra fields (align with template names)
+        question_preference = request.POST.get('quiz_type', 'MIX')  
         prompt = request.POST.get('input_prompt', '').strip()
         url = request.POST.get('input_url', '').strip()
         text = request.POST.get('input_text', '').strip()
-        upload_file = request.FILES.get('input_pdf')   # template uses input_pdf
+        upload_file = request.FILES.get('input_pdf')   
 
-        # Decide the source of content
         content_source = None
         if prompt:
             content_source = prompt
@@ -480,9 +405,8 @@ def generate_quiz(request):
         elif upload_file and upload_file.name.endswith(".pdf"):
             content_source = extract_text_from_pdf(upload_file)
         else:
-            content_source = topic  # fallback if nothing else
+            content_source = topic  
 
-        # Call generator
         raw_quiz = generate__quiz(
             topic=topic,
             language=language,
@@ -494,7 +418,6 @@ def generate_quiz(request):
 
         parsed_quiz = parse_quiz_response(raw_quiz)
 
-        # Save quiz
         quiz = Quiz.objects.create(
             topic=parsed_quiz["topic"],
             difficulty=parsed_quiz["difficulty"],
@@ -502,7 +425,6 @@ def generate_quiz(request):
             question_preference=question_preference
         )
 
-        # Save questions + options
         for q in parsed_quiz["questions"]:
             question = Question.objects.create(
                 quiz=quiz,
@@ -536,7 +458,7 @@ def quiz_take(request, quiz_id):
         user_answers = {}
 
         for question in questions:
-            user_answer = request.POST.get(str(question.id))  # input name = question.id
+            user_answer = request.POST.get(str(question.id))  
             user_answers[str(question.id)] = user_answer
 
             if question.question_type == "SHORT":
@@ -565,11 +487,10 @@ def quiz_list(request):
     user = request.user
     quizzes = Quiz.objects.all()
 
-    # Mark which quizzes the user has attempted
     attempted_quizzes = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
 
     for quiz in quizzes:
-        quiz.attempted = quiz.id in attempted_quizzes  # add a custom attribute
+        quiz.attempted = quiz.id in attempted_quizzes 
 
     return render(request, "quiz_list.html", {"quizzes": quizzes})
 
@@ -577,7 +498,6 @@ def retake_quiz(request, quiz_id):
     user = request.user
     quiz = get_object_or_404(Quiz, id=quiz_id)
 
-    # Always fetch the existing attempt (one per user+quiz)
     attempt, created = QuizAttempt.objects.get_or_create(user=user, quiz=quiz)
 
     if request.method == "POST":
@@ -595,7 +515,6 @@ def retake_quiz(request, quiz_id):
             elif user_answer and user_answer.strip().lower() == question.answer.strip().lower():
                 marks += 1
 
-        # ✅ Update the existing attempt instead of creating new
         attempt.score = marks
         attempt.answers = user_answers
         attempt.save()
@@ -603,7 +522,6 @@ def retake_quiz(request, quiz_id):
         return redirect("quiz_result", attempt_id=attempt.id)
 
 def explore(request):
-    # Only fetch quizzes that are public
     quizzes = Quiz.objects.filter(is_public=True).annotate(
         avg_rating=Avg('ratings__rating')
     )
@@ -627,15 +545,10 @@ def rate_quiz(request, quiz_id):
 def add_to_my_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)
     
-    # Add current user to the shared_with ManyToMany field
     if request.user in quiz.shared_with.all():
-        # messages.info(request, "This quiz is already in your list.")
         pass
     else:
         quiz.shared_with.add(request.user)
-        # messages.success(request, "Quiz added to your list successfully!")
-    
-    # Redirect back to the same page (or anywhere you want)
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 @login_required
@@ -669,7 +582,7 @@ def join_server(request):
 
 @login_required
 def server_detail(request, server_id):
-    quizes = Quiz.objects.filter(user=request.user)  # rename variable
+    quizes = Quiz.objects.filter(user=request.user)  
     server = get_object_or_404(Server, id=server_id)
     quizzes = server.quizzes.all()
     return render(request, 'server_detail.html', {'server': server, 'quizzes': quizzes, 'quizes': quizes})
