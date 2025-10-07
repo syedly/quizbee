@@ -45,21 +45,6 @@ def handle_login(request):
             return HttpResponse('Invalid credentials! Please try again')
     return render(request, 'login.html')
 
-
-# def profile(request):
-#     servers = Server.objects.filter(created_by=request.user)
-#     quizzes_created = Quiz.objects.filter(user=request.user).count()
-#     quizzes_completed = QuizAttempt.objects.filter(user=request.user).count()
-#     best_score = QuizAttempt.objects.filter(user=request.user).aggregate(
-#         Max('score')
-#     )['score__max'] or 0
-
-#     return render(request, 'profile.html', {
-#         'servers': servers,
-#         'quizzes_created': quizzes_created,
-#         'quizzes_completed': quizzes_completed,
-#         'best_score': f"{best_score}%",
-#     })
 def profile(request):
     servers = Server.objects.filter(created_by=request.user)
     quizzes_created = Quiz.objects.filter(user=request.user).count()
@@ -583,9 +568,10 @@ def join_server(request):
 @login_required
 def server_detail(request, server_id):
     quizes = Quiz.objects.filter(user=request.user)  
+    attempted_quiz = QuizAttempt.objects.filter(user=request.user).values_list("quiz_id", flat=True)
     server = get_object_or_404(Server, id=server_id)
     quizzes = server.quizzes.all()
-    return render(request, 'server_detail.html', {'server': server, 'quizzes': quizzes, 'quizes': quizes})
+    return render(request, 'server_detail.html', {'server': server, 'quizzes': quizzes, 'quizes': quizes, 'attempted_quiz': attempted_quiz})
 
 def add_quiz_to_server(request, server_id):
     server = get_object_or_404(Server, id=server_id)

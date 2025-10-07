@@ -1,70 +1,81 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="max-w-3xl mx-auto bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md mt-6">
-  <div class="flex justify-between items-center mb-4">
-    <div>
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ server.name }}</h2>
-      <p class="text-gray-500 dark:text-gray-400">{{ server.description }}</p>
-      <p class="text-sm text-gray-400 mt-1">
-        <strong>Join Code:</strong> {{ server.code }}
-      </p>
-    </div>
+{% extends 'base.html' %}
+{% load static %}
 
-    <!-- If user is the creator, show "Add Quiz" button -->
-    {% if request.user == server.created_by %}
-    <button 
-      onclick="document.getElementById('addQuizModal').showModal()" 
-      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-      + Add Quiz
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+
+  <!-- Server Header -->
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md mb-6 flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ server.name }}</h1>
+      <p class="text-gray-600 dark:text-gray-300 mt-1">{{ server.description }}</p>
+    </div>
+    <button id="openMembersBtn"
+      class="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition">
+      👥 Members
     </button>
-    {% endif %}
   </div>
 
-  <hr class="border-gray-300 dark:border-gray-700 my-4">
+  <!-- Quizzes Section -->
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md">
+    <h3 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Available Quizzes</h3>
+    <ul class="space-y-3">
+      {% for sq in quizzes %}
+      <li class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-700 flex justify-between items-center">
+        <div>
+          <span class="font-semibold text-gray-900 dark:text-gray-100">{{ sq.quiz.topic }}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400">({{ sq.quiz.difficulty }})</span>
+        </div>
 
-  <h3 class="text-xl font-semibold mb-2 text-gray-800 dark:text-white">Available Quizzes</h3>
-  <ul class="space-y-3">
-    {% for sq in quizzes %}
-      <li class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
-        <span class="font-semibold">{{ sq.quiz.topic }}</span>
-        <span class="text-sm text-gray-500">({{ sq.quiz.difficulty }})</span>
-            <a href="{% url 'quiz_take' sq.quiz.id %}" 
-       class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-       Take Quiz
-    </a>
+        {% if sq.quiz.id in attempted_quiz %}
+        <span class="text-green-600 dark:text-green-400 font-semibold">✅ Already Taken</span>
+        {% else %}
+        <a href="{% url 'quiz_take' sq.quiz.id %}"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          Take Quiz
+        </a>
+        {% endif %}
       </li>
-    {% empty %}
-      <p class="text-gray-500">No quizzes assigned yet.</p>
-    {% endfor %}
-  </ul>
+      {% empty %}
+      <p class="text-gray-500 dark:text-gray-400">No quizzes assigned yet.</p>
+      {% endfor %}
+    </ul>
+  </div>
+
 </div>
 
-<!-- Add Quiz Modal -->
-{% if request.user == server.created_by %}
-<dialog id="addQuizModal" class="rounded-lg p-6 bg-white dark:bg-gray-900 shadow-lg">
-  <form method="POST" action="{% url 'add_quiz_to_server' server.id %}">
-    {% csrf_token %}
-    <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-white">Add Quiz to Server</h3>
-    
-    <label class="block mb-2 text-gray-700 dark:text-gray-300">Select a Quiz:</label>
-    <select name="quiz_id" class="border border-gray-300 dark:border-gray-700 rounded-md p-2 w-full mb-4">
-        {% for quiz in quizes %}
-            <option value="{{ quiz.id }}">{{ quiz.topic }} ({{ quiz.difficulty }})</option>
-        {% endfor %}
-    </select>
+<!-- Members Modal -->
+<div id="membersModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg w-96 p-6 relative">
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Server Members</h2>
 
+    <ul class="max-h-60 overflow-y-auto divide-y divide-gray-200 dark:divide-gray-700">
+      {% for member in members %}
+      <li class="py-2 text-gray-800 dark:text-gray-200">
+        👤 {{ member.username }}
+      </li>
+      {% empty %}
+      <p class="text-gray-500 dark:text-gray-400 text-center">No members yet.</p>
+      {% endfor %}
+    </ul>
 
-    <div class="flex justify-end space-x-2">
-      <button type="button" onclick="this.closest('dialog').close()" 
-              class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700">
-        Cancel
-      </button>
-      <button type="submit" 
-              class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">
-        Add Quiz
-      </button>
-    </div>
-  </form>
-</dialog>
-{% endif %}
+    <button id="closeMembersBtn"
+      class="absolute top-3 right-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-xl">
+      ✕
+    </button>
+  </div>
+</div>
+
+<!-- JS for Modal -->
+<script>
+  const modal = document.getElementById('membersModal');
+  const openBtn = document.getElementById('openMembersBtn');
+  const closeBtn = document.getElementById('closeMembersBtn');
+
+  openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+  closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+</script>
 {% endblock %}
