@@ -33,4 +33,6 @@ urlpatterns = [
     path("servers/<int:server_id>/delete/", views.delete_server, name="delete_server"),
     path("servers/<int:server_id>/members/", views.show_members, name="show_members"),
     path("show_server_quiz_results/<int:server_id>/", views.show_server_quiz_results, name="show_server_quiz_results"),
+    path('update-preferences/', views.update_prefrences, name='update_prefrences'),
+
 ]

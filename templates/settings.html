@@ -84,12 +84,12 @@
     <!-- Preferences Section -->
     <section class="bg-white dark:bg-primary/10 p-6 rounded-xl shadow-md">
       <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Preferences</h2>
-      <form method="POST" action="">
+      <form method="POST" action="{% url "update_prefrences" %}">
         {% csrf_token %}
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <label class="font-medium text-gray-700 dark:text-gray-300">Dark Mode</label>
-            <input type="checkbox" name="dark_mode" class="toggle-checkbox" {% if user.userprofile.dark_mode %}checked{% endif %}>
+            <label class="font-medium text-gray-700 dark:text-gray-300">Light Mode</label>
+            <input type="checkbox" name="light_mode" class="toggle-checkbox" {% if user.userprofile.light_mode %}checked{% endif %}>
           </div>
           <div class="flex items-center justify-between">
             <label class="font-medium text-gray-700 dark:text-gray-300">Email Notifications</label>

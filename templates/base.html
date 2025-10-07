@@ -1,6 +1,13 @@
 {% load static %}
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html 
+  lang="en"
+  {% if user.is_authenticated and user.userprofile.light_mode %}
+    class=""
+  {% else %}
+    class="dark"
+  {% endif %}
+>
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>

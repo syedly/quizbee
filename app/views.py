@@ -505,6 +505,7 @@ def retake_quiz(request, quiz_id):
         attempt.save()
 
         return redirect("quiz_result", attempt_id=attempt.id)
+    return render(request, "quiz-take.html", {"quiz": quiz, "questions": quiz.questions.all()})
 
 def explore(request):
     quizzes = Quiz.objects.filter(is_public=True).annotate(
@@ -584,3 +585,14 @@ def add_quiz_to_server(request, server_id):
         quiz = get_object_or_404(Quiz, id=quiz_id)
         ServerQuiz.objects.create(server=server, quiz=quiz)
         return redirect("server_detail", server_id=server.id)
+
+def update_prefrences(request):
+    if request.method == "POST":
+        light_mode = request.POST.get("light_mode") == "on"
+
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        profile.light_mode = light_mode
+        profile.save()
+
+        return redirect("settings")
+    return redirect("settings")

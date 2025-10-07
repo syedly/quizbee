@@ -37,3 +37,23 @@ overlay.addEventListener("click", () => {
       },
     },
   };
+
+// ====== Theme Switch Handling ======
+document.addEventListener("DOMContentLoaded", () => {
+  const modeToggle = document.querySelector('input[name="light_mode"]');
+  if (modeToggle) {
+    modeToggle.addEventListener("change", () => {
+      if (modeToggle.checked) {
+        // Light mode
+        document.documentElement.classList.remove("dark");
+        document.body.classList.add("bg-background-light", "text-gray-800");
+        document.body.classList.remove("bg-background-dark", "text-gray-200");
+      } else {
+        // Dark mode
+        document.documentElement.classList.add("dark");
+        document.body.classList.add("bg-background-dark", "text-gray-200");
+        document.body.classList.remove("bg-background-light", "text-gray-800");
+      }
+    });
+  }
+});
