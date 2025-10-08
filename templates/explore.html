@@ -85,6 +85,27 @@
               <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="#">For You</a>
             </nav>
           </div>
+            <!-- 👇 New Container (Under Filters) -->
+          <div class="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-xl">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Categories</h3>
+
+            <ul id="categoryList" class="space-y-2 max-h-48 overflow-hidden transition-all duration-500">
+              {% for category in categories %}
+                <li>
+                  <a href="#"
+                    class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    {{ category }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+
+            <!-- View More / Less Button -->
+            <button id="toggleCategories"
+              class="mt-4 text-primary font-medium hover:underline focus:outline-none">
+              View More
+            </button>
+          </div>
         </aside>
       </div>
     </div>
@@ -105,5 +126,20 @@ document.querySelectorAll('form').forEach(form => {
   });
 });
 </script>
+<script>
+  const list = document.getElementById("categoryList");
+  const btn = document.getElementById("toggleCategories");
+
+  btn.addEventListener("click", () => {
+    if (list.classList.contains("max-h-48")) {
+      list.classList.remove("max-h-48");
+      btn.textContent = "View Less";
+    } else {
+      list.classList.add("max-h-48");
+      btn.textContent = "View More";
+    }
+  });
+</script>
+
 
 {% endblock %}

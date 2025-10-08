@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
-from services import generate__quiz, check_short_answer, assistant
+from services import generate__quiz, check_short_answer, assistant, check_multiple_choice
 from processing import fetch_text_from_url, extract_text_from_pdf
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -22,7 +22,7 @@ from constants import (
     LANGUAGES, DEFAULT_LANGUAGE,
     DIFFICULTY_LEVELS, DEFAULT_DIFFICULTY,
     QUESTION_TYPES, DEFAULT_QUESTION_TYPE,
-    CHOOSE_OPTIONS, DEFAULT_CHOOSE
+    CHOOSE_OPTIONS, DEFAULT_CHOOSE, QUIZ_CATEGORIES
 )
 
 def index(request):
@@ -340,6 +340,7 @@ def parse_quiz_response(response_text):
     return {
         "topic": topic,
         "difficulty": quiz_difficulty,
+        "category": re.search(r"Category:\s*(.+)", response_text, re.IGNORECASE).group(1).strip() if re.search(r"Category:\s*(.+)", response_text, re.IGNORECASE) else "General",
         "questions": parsed_questions
     }
 
@@ -372,15 +373,16 @@ def generate_quiz(request):
     if request.method == 'POST':
         topic = request.POST.get('topic', 'General')
         language = request.POST.get('language', 'English')
-        num_questions = request.POST.get('quiz_count', '5')   
+        num_questions = int(request.POST.get('quiz_count', 5))
         difficulty = request.POST.get('difficulty', '1')
-        question_preference = request.POST.get('quiz_type', 'MIX')  
+        question_preference = request.POST.get('quiz_type', 'MIX').upper()
+        category = request.POST.get('category', 'General')  # ✅ new field
         prompt = request.POST.get('input_prompt', '').strip()
         url = request.POST.get('input_url', '').strip()
         text = request.POST.get('input_text', '').strip()
-        upload_file = request.FILES.get('input_pdf')   
+        upload_file = request.FILES.get('input_pdf')
 
-        content_source = None
+        # Detect source
         if prompt:
             content_source = prompt
         elif url:
@@ -390,7 +392,7 @@ def generate_quiz(request):
         elif upload_file and upload_file.name.endswith(".pdf"):
             content_source = extract_text_from_pdf(upload_file)
         else:
-            content_source = topic  
+            content_source = topic
 
         raw_quiz = generate__quiz(
             topic=topic,
@@ -404,21 +406,23 @@ def generate_quiz(request):
         parsed_quiz = parse_quiz_response(raw_quiz)
 
         quiz = Quiz.objects.create(
-            topic=parsed_quiz["topic"],
-            difficulty=parsed_quiz["difficulty"],
+            topic=parsed_quiz.get("topic", topic),
+            difficulty=parsed_quiz.get("difficulty", difficulty),
+            category=parsed_quiz.get("category", "General"),
+            question_preference=question_preference,  # ✅ keep user’s choice
             user=request.user if request.user.is_authenticated else None,
-            question_preference=question_preference
         )
 
         for q in parsed_quiz["questions"]:
             question = Question.objects.create(
                 quiz=quiz,
                 text=q["text"],
-                question_type=q["type"],
+                question_type=q["type"].upper(),
                 difficulty=q["difficulty"],
                 answer=q["answer"]
             )
-            if q["type"] == "MCQ" and q.get("mcq_options"):
+
+            if q["type"].upper() == "MCQ" and q.get("mcq_options"):
                 for opt in q["mcq_options"]:
                     Option.objects.create(question=question, text=opt.strip())
 
@@ -427,6 +431,65 @@ def generate_quiz(request):
 
     return redirect('main')
 
+
+# def generate_quiz(request):
+#     if request.method == 'POST':
+#         topic = request.POST.get('topic', 'General')
+#         language = request.POST.get('language', 'English')
+#         num_questions = request.POST.get('quiz_count', '5')   
+#         difficulty = request.POST.get('difficulty', '1')
+#         question_preference = request.POST.get('quiz_type', 'MIX')  
+#         prompt = request.POST.get('input_prompt', '').strip()
+#         url = request.POST.get('input_url', '').strip()
+#         text = request.POST.get('input_text', '').strip()
+#         upload_file = request.FILES.get('input_pdf')   
+
+#         content_source = None
+#         if prompt:
+#             content_source = prompt
+#         elif url:
+#             content_source = fetch_text_from_url(url)
+#         elif text:
+#             content_source = text
+#         elif upload_file and upload_file.name.endswith(".pdf"):
+#             content_source = extract_text_from_pdf(upload_file)
+#         else:
+#             content_source = topic  
+
+#         raw_quiz = generate__quiz(
+#             topic=topic,
+#             language=language,
+#             num_questions=num_questions,
+#             difficulty=difficulty,
+#             question_type=question_preference,
+#             content=content_source
+#         )
+
+#         parsed_quiz = parse_quiz_response(raw_quiz)
+
+#         quiz = Quiz.objects.create(
+#             topic=parsed_quiz["topic"],
+#             difficulty=parsed_quiz["difficulty"],
+#             user=request.user if request.user.is_authenticated else None,
+#             question_preference=question_preference
+#         )
+
+#         for q in parsed_quiz["questions"]:
+#             question = Question.objects.create(
+#                 quiz=quiz,
+#                 text=q["text"],
+#                 question_type=q["type"],
+#                 difficulty=q["difficulty"],
+#                 answer=q["answer"]
+#             )
+#             if q["type"] == "MCQ" and q.get("mcq_options"):
+#                 for opt in q["mcq_options"]:
+#                     Option.objects.create(question=question, text=opt.strip())
+
+#         quizzes = Quiz.objects.all().order_by('-id')[:20]
+#         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
+
+#     return redirect('main')
 
 def quiz_detail(request, quiz_id):
     quiz  = get_object_or_404(Quiz, id=quiz_id)
@@ -448,6 +511,9 @@ def quiz_take(request, quiz_id):
 
             if question.question_type == "SHORT":
                 if user_answer and check_short_answer(user_answer, question.answer):
+                    marks += 1
+            if question.question_type == "MCQ":
+                if user_answer and check_multiple_choice(user_answer, question.answer):
                     marks += 1
             if user_answer and user_answer.strip().lower() == question.answer.strip().lower():
                 marks += 1
@@ -511,7 +577,7 @@ def explore(request):
     quizzes = Quiz.objects.filter(is_public=True).annotate(
         avg_rating=Avg('ratings__rating')
     )
-    return render(request, 'explore.html', {'quizzes': quizzes})
+    return render(request, 'explore.html', {'quizzes': quizzes, 'categories': QUIZ_CATEGORIES})
 
 def rate_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)

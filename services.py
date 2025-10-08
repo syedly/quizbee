@@ -20,6 +20,7 @@ system_message = """
 You are a helpful agent that creates quizzes.
 
 Rules:
+- Always include a **Category** line at the start that best describes the topic (e.g., Science, History, Geography, Sports, Literature, etc.).
 - You generate quizzes when the user requests it (e.g., "make a quiz on history").
 - You can create questions in the language the user specifies.
 - You must generate **5 questions** unless the user specifies otherwise.
@@ -42,6 +43,7 @@ Rules:
 
 Format:
 Topic: <topic> (Difficulty <level>)
+Category: <category>
 
 Questions:
 1. <Question>
@@ -61,6 +63,7 @@ Question Difficulty Levels:
 def generate__quiz(
     topic: str = "General",
     language: str = "English",
+    category: str = "General",
     num_questions: int = 5,
     difficulty: int = 1,
     question_type: str = "mix",
@@ -85,6 +88,7 @@ def generate__quiz(
         f"Make a quiz based on the following content:\n\n"
         f"{base_text}\n\n"
         f"Language: {language}\n"
+        f"Category: {category}\n"
         f"Number of questions: {num_questions}\n"
         f"Difficulty level: {difficulty}\n"
         f"Question type: {question_type}\n"
@@ -103,6 +107,20 @@ def generate__quiz(
 def check_short_answer(user_answer: str, correct_answer: str) -> bool:
     system_message = """
     You are a helpful assistant that checks short answers.
+    - Compare the user's answer with the correct answer.
+    - Be lenient with minor spelling mistakes or synonyms.
+    - Return True if the answer is correct, otherwise return False.
+    """
+    messages = [
+        SystemMessage(content=system_message),
+        HumanMessage(content=f"User's answer: {user_answer}\nCorrect answer: {correct_answer}\nIs the user's answer correct?"),
+    ]
+    response = llm.invoke(messages)
+    return response.content.strip().lower() == "true"
+
+def check_multiple_choice(user_answer: str, correct_answer: str) -> bool:
+    system_message = """
+    You are a helpful assistant that checks MCQS answers.
     - Compare the user's answer with the correct answer.
     - Be lenient with minor spelling mistakes or synonyms.
     - Return True if the answer is correct, otherwise return False.

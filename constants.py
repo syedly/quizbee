@@ -148,3 +148,28 @@ CHOOSE_OPTIONS = {
     "upload_file": "Upload File",
 }
 DEFAULT_CHOOSE = "text"
+
+# constants.py
+
+QUIZ_CATEGORIES = [
+    "Programming",
+    "Science",
+    "Mathematics",
+    "History",
+    "Geography",
+    "General Knowledge",
+    "Sports",
+    "Technology",
+    "Entertainment",
+    "Music",
+    "Movies",
+    "Art",
+    "Literature",
+    "Business",
+    "Health",
+    "Education",
+    "Current Affairs",
+    "Coding",
+    "Space",
+    "AI & Machine Learning",
+]
