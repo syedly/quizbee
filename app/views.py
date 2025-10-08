@@ -344,30 +344,30 @@ def parse_quiz_response(response_text):
         "questions": parsed_questions
     }
 
-def save_quiz_to_db(parsed_quiz):
-    quiz = Quiz.objects.create(
-        topic=parsed_quiz["topic"],
-        difficulty=parsed_quiz["difficulty"]
-    )
+# def save_quiz_to_db(parsed_quiz):
+#     quiz = Quiz.objects.create(
+#         topic=parsed_quiz["topic"],
+#         difficulty=parsed_quiz["difficulty"]
+#     )
 
-    for q in parsed_quiz["questions"]:
-        question = Question.objects.create(
-            quiz=quiz,
-            text=q["text"],
-            question_type=q["type"],
-            difficulty=q["difficulty"],
-            answer=q["answer"]
-        )
+#     for q in parsed_quiz["questions"]:
+#         question = Question.objects.create(
+#             quiz=quiz,
+#             text=q["text"],
+#             question_type=q["type"],
+#             difficulty=q["difficulty"],
+#             answer=q["answer"]
+#         )
 
-        if q["type"] == "MCQ" and q.get("mcq_options"):
-            for opt in q["mcq_options"]:
-                Option.objects.create(question=question, text=opt.strip())
-        else:
-            opts = re.findall(r"(?:\([a-d]\)|[a-d]\))\s*([^\n\r]+)", q.get("raw_text", ""), flags=re.IGNORECASE)
-            for opt in opts:
-                Option.objects.create(question=question, text=opt.strip())
+#         if q["type"] == "MCQ" and q.get("mcq_options"):
+#             for opt in q["mcq_options"]:
+#                 Option.objects.create(question=question, text=opt.strip())
+#         else:
+#             opts = re.findall(r"(?:\([a-d]\)|[a-d]\))\s*([^\n\r]+)", q.get("raw_text", ""), flags=re.IGNORECASE)
+#             for opt in opts:
+#                 Option.objects.create(question=question, text=opt.strip())
 
-    return quiz
+#     return quiz
 
 def generate_quiz(request):
     if request.method == 'POST':
@@ -577,7 +577,19 @@ def explore(request):
     quizzes = Quiz.objects.filter(is_public=True).annotate(
         avg_rating=Avg('ratings__rating')
     )
-    return render(request, 'explore.html', {'quizzes': quizzes, 'categories': QUIZ_CATEGORIES})
+    return render(request, 'explore.html', {'quizzes': quizzes, 'categories': QUIZ_CATEGORIES, 'active_filter': 'explore'})
+
+
+def trending(request):
+    quizzes = Quiz.objects.filter(is_public=True).annotate(
+        avg_rating=Avg('ratings__rating')
+    ).filter(avg_rating__gt=3.5)
+
+    return render(request, "explore.html", {
+        "quizzes": quizzes,
+        "categories": QUIZ_CATEGORIES,
+        "active_filter": "trending"
+    })
 
 def rate_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)

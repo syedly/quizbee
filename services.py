@@ -167,8 +167,13 @@ def assistant(query: str) -> str:
     """
     global message_history
 
+    # Add the user's message to history
     message_history.append({"role": "user", "content": query})
-    response = llm.invoke(message_history) 
+
+    # Call Gemini LLM with the full history
+    response = llm.invoke(message_history)  # assuming llm.invoke works with a list of messages
+
+    # Add AI's response to history
     message_history.append({"role": "assistant", "content": response.content})
 
     return response.content

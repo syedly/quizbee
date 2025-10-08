@@ -16,6 +16,29 @@
     </button>
   </div>
 
+  <!-- Add Quiz Dropdown -->
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md mb-6">
+    <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Add Your Quiz to This Server</h3>
+
+    <form action="{% url 'add_quiz_to_server' server.id %}" method="POST" class="flex items-center gap-3">
+      {% csrf_token %}
+      <select name="quiz_id" required
+        class="border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">-- Select a Quiz --</option>
+        {% for quiz in quizes %}
+        <option value="{{ quiz.id }}">{{ quiz.topic }} ({{ quiz.difficulty }})</option>
+        {% empty %}
+        <option disabled>No quizzes available</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit"
+        class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition">
+        ➕ Add
+      </button>
+    </form>
+  </div>
+
   <!-- Quizzes Section -->
   <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md">
     <h3 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Available Quizzes</h3>

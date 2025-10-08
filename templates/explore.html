@@ -80,8 +80,8 @@
           <div class="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-xl">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Filters</h3>
             <nav class="space-y-2">
-              <a class="block w-full text-left px-4 py-2 rounded-lg bg-primary text-white font-medium" href="#">Trending</a>
-              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="#">Explore</a>
+              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="{% url "trending" %}">Trending</a>
+              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="{% url "explore" %}">Explore</a>
               <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="#">For You</a>
             </nav>
           </div>
