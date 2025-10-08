@@ -1,5 +1,6 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import SystemMessage, HumanMessage
+from langchain.memory import ConversationBufferMemory
 import os
 from dotenv import load_dotenv
 
@@ -132,14 +133,43 @@ def check_multiple_choice(user_answer: str, correct_answer: str) -> bool:
     response = llm.invoke(messages)
     return response.content.strip().lower() == "true"
 
+# def assistant(query: str) -> str:
+#     """
+#     General-purpose AI model function to handle various queries.
+#     """
+#     messages = [
+#         SystemMessage(content="You are a helpful assistant. that guide about the app and answer general question about studies and tell about the features of the app how the app is working name of the app is quiz hippo and it is a educational purpose app in this app student can enroll itself and make quiz on any topic due to ai powers student can generate quiz by a prompt or by giving a pdf file or a url or text it is very simple t use only some steps required give the context tell about the difficulty question types t/f short question ans choose ans fill in the blanks or mix and give the language in which you want the quiz and how many questions you want and then click on generate quiz and your quiz is ready also student can share the quiz with other student and teacher can also share the quiz with student and student can attempt the quiz and see their results and performance and can also see the correct answers of the question it is very helpful app for students to learn new things and test their knowledge this app is only for educational purpose and the ai name is professor hippo which guide about the app and answer general question about studies"),
+#         HumanMessage(content=query),
+#     ]
+#     response = llm.invoke(messages)
+#     return response.content
+
+# Global message history to act as memory
+
+message_history = [
+    {
+        "role": "system",
+        "content": (
+            "You are a helpful assistant that guides about the app and answers general questions "
+            "about studies. The app name is Quiz Hippo. It is an educational app where students "
+            "can enroll, create quizzes on any topic via AI (using prompt, PDF, URL, or text). "
+            "Students can set difficulty, question types (T/F, short answer, multiple choice, fill in the blanks, or mixed), language, and number of questions. "
+            "Click 'generate quiz' and the quiz is ready. Quizzes can be shared with other students or teachers. "
+            "Students can attempt quizzes, view results, performance, and correct answers. "
+            "The AI name is Professor Hippo, who guides the user about the app. This app is for educational purposes only."
+        )
+    }
+]
+
 def assistant(query: str) -> str:
     """
-    General-purpose AI model function to handle various queries.
+    General-purpose AI model function with memory buffer for Gemini 2.0 Flash.
     """
-    messages = [
-        SystemMessage(content="You are a helpful assistant. that guide about the app and answer general question about studies and tell about the features of the app how the app is working name of the app is quiz hippo and it is a educational purpose app in this app student can enroll itself and make quiz on any topic due to ai powers student can generate quiz by a prompt or by giving a pdf file or a url or text it is very simple t use only some steps required give the context tell about the difficulty question types t/f short question ans choose ans fill in the blanks or mix and give the language in which you want the quiz and how many questions you want and then click on generate quiz and your quiz is ready also student can share the quiz with other student and teacher can also share the quiz with student and student can attempt the quiz and see their results and performance and can also see the correct answers of the question it is very helpful app for students to learn new things and test their knowledge this app is only for educational purpose and the ai name is professor hippo which guide about the app and answer general question about studies"),
-        HumanMessage(content=query),
-    ]
-    response = llm.invoke(messages)
+    global message_history
+
+    message_history.append({"role": "user", "content": query})
+    response = llm.invoke(message_history) 
+    message_history.append({"role": "assistant", "content": response.content})
+
     return response.content
 
