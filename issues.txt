@@ -1,3 +1,5 @@
 1. some time mcqs are not make correct they are in a very irregular format like [] a.ans b.ans c.ans not sepratley
 2. results are not checking correctly
 3. Question Preferences: Not saving correctly — always defaults to “short”. 
+4. Incorrect answers display differently (use a unified display style matching the default result view). 
+5. User Answers: Not displaying correctly in results. 
