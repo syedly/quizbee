@@ -133,19 +133,6 @@ def check_multiple_choice(user_answer: str, correct_answer: str) -> bool:
     response = llm.invoke(messages)
     return response.content.strip().lower() == "true"
 
-# def assistant(query: str) -> str:
-#     """
-#     General-purpose AI model function to handle various queries.
-#     """
-#     messages = [
-#         SystemMessage(content="You are a helpful assistant. that guide about the app and answer general question about studies and tell about the features of the app how the app is working name of the app is quiz hippo and it is a educational purpose app in this app student can enroll itself and make quiz on any topic due to ai powers student can generate quiz by a prompt or by giving a pdf file or a url or text it is very simple t use only some steps required give the context tell about the difficulty question types t/f short question ans choose ans fill in the blanks or mix and give the language in which you want the quiz and how many questions you want and then click on generate quiz and your quiz is ready also student can share the quiz with other student and teacher can also share the quiz with student and student can attempt the quiz and see their results and performance and can also see the correct answers of the question it is very helpful app for students to learn new things and test their knowledge this app is only for educational purpose and the ai name is professor hippo which guide about the app and answer general question about studies"),
-#         HumanMessage(content=query),
-#     ]
-#     response = llm.invoke(messages)
-#     return response.content
-
-# Global message history to act as memory
-
 message_history = [
     {
         "role": "system",

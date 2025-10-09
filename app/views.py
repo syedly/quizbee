@@ -344,31 +344,6 @@ def parse_quiz_response(response_text):
         "questions": parsed_questions
     }
 
-# def save_quiz_to_db(parsed_quiz):
-#     quiz = Quiz.objects.create(
-#         topic=parsed_quiz["topic"],
-#         difficulty=parsed_quiz["difficulty"]
-#     )
-
-#     for q in parsed_quiz["questions"]:
-#         question = Question.objects.create(
-#             quiz=quiz,
-#             text=q["text"],
-#             question_type=q["type"],
-#             difficulty=q["difficulty"],
-#             answer=q["answer"]
-#         )
-
-#         if q["type"] == "MCQ" and q.get("mcq_options"):
-#             for opt in q["mcq_options"]:
-#                 Option.objects.create(question=question, text=opt.strip())
-#         else:
-#             opts = re.findall(r"(?:\([a-d]\)|[a-d]\))\s*([^\n\r]+)", q.get("raw_text", ""), flags=re.IGNORECASE)
-#             for opt in opts:
-#                 Option.objects.create(question=question, text=opt.strip())
-
-#     return quiz
-
 def generate_quiz(request):
     if request.method == 'POST':
         topic = request.POST.get('topic', 'General')
@@ -427,69 +402,23 @@ def generate_quiz(request):
                     Option.objects.create(question=question, text=opt.strip())
 
         quizzes = Quiz.objects.all().order_by('-id')[:20]
-        return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
+        context = {
+
+            'languages': LANGUAGES,
+            'default_language': DEFAULT_LANGUAGE,
+
+            'levels': DIFFICULTY_LEVELS,
+            'default_level': DEFAULT_DIFFICULTY,
+
+            'question_types': QUESTION_TYPES,
+            'default_type': DEFAULT_QUESTION_TYPE,
+
+            'choose_options': CHOOSE_OPTIONS,
+            'default_choose': DEFAULT_CHOOSE,
+        }
+        return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz, **context})
 
     return redirect('main')
-
-
-# def generate_quiz(request):
-#     if request.method == 'POST':
-#         topic = request.POST.get('topic', 'General')
-#         language = request.POST.get('language', 'English')
-#         num_questions = request.POST.get('quiz_count', '5')   
-#         difficulty = request.POST.get('difficulty', '1')
-#         question_preference = request.POST.get('quiz_type', 'MIX')  
-#         prompt = request.POST.get('input_prompt', '').strip()
-#         url = request.POST.get('input_url', '').strip()
-#         text = request.POST.get('input_text', '').strip()
-#         upload_file = request.FILES.get('input_pdf')   
-
-#         content_source = None
-#         if prompt:
-#             content_source = prompt
-#         elif url:
-#             content_source = fetch_text_from_url(url)
-#         elif text:
-#             content_source = text
-#         elif upload_file and upload_file.name.endswith(".pdf"):
-#             content_source = extract_text_from_pdf(upload_file)
-#         else:
-#             content_source = topic  
-
-#         raw_quiz = generate__quiz(
-#             topic=topic,
-#             language=language,
-#             num_questions=num_questions,
-#             difficulty=difficulty,
-#             question_type=question_preference,
-#             content=content_source
-#         )
-
-#         parsed_quiz = parse_quiz_response(raw_quiz)
-
-#         quiz = Quiz.objects.create(
-#             topic=parsed_quiz["topic"],
-#             difficulty=parsed_quiz["difficulty"],
-#             user=request.user if request.user.is_authenticated else None,
-#             question_preference=question_preference
-#         )
-
-#         for q in parsed_quiz["questions"]:
-#             question = Question.objects.create(
-#                 quiz=quiz,
-#                 text=q["text"],
-#                 question_type=q["type"],
-#                 difficulty=q["difficulty"],
-#                 answer=q["answer"]
-#             )
-#             if q["type"] == "MCQ" and q.get("mcq_options"):
-#                 for opt in q["mcq_options"]:
-#                     Option.objects.create(question=question, text=opt.strip())
-
-#         quizzes = Quiz.objects.all().order_by('-id')[:20]
-#         return render(request, 'main.html', {'quizzes': quizzes, 'created_quiz': quiz})
-
-#     return redirect('main')
 
 def quiz_detail(request, quiz_id):
     quiz  = get_object_or_404(Quiz, id=quiz_id)
@@ -529,10 +458,28 @@ def quiz_take(request, quiz_id):
 
     return render(request, "quiz-take.html", {"quiz": quiz, "questions": questions})
 
+def incorrect_answer(quiz, attempt):
+    total_questions = quiz.questions.count()
+    if not attempt:
+        return total_questions
+    return total_questions - attempt.score
+
 def quiz_result(request, attempt_id):
     attempt = get_object_or_404(QuizAttempt, id=attempt_id)
     quiz = attempt.quiz
-    return render(request, "quiz-result.html", {"attempt": attempt, "quiz": quiz})
+
+    incorrect = incorrect_answer(quiz, attempt)
+
+    return render(request, "quiz-result.html", {
+        "attempt": attempt,
+        "quiz": quiz,
+        "incorrect": incorrect,
+    })
+
+# def quiz_result(request, attempt_id):
+#     attempt = get_object_or_404(QuizAttempt, id=attempt_id)
+#     quiz = attempt.quiz
+#     return render(request, "quiz-result.html", {"attempt": attempt, "quiz": quiz})
 
 def quiz_list(request):
     user = request.user
@@ -573,13 +520,6 @@ def retake_quiz(request, quiz_id):
         return redirect("quiz_result", attempt_id=attempt.id)
     return render(request, "quiz-take.html", {"quiz": quiz, "questions": quiz.questions.all()})
 
-# def explore(request):
-#     quizzes = Quiz.objects.filter(is_public=True).annotate(
-#         avg_rating=Avg('ratings__rating')
-#     )
-#     return render(request, 'explore.html', {'quizzes': quizzes, 'categories': QUIZ_CATEGORIES, 'active_filter': 'explore'})
-
-
 def explore(request, filter_type=None):
     quizzes = Quiz.objects.filter(is_public=True).annotate(
         avg_rating=Avg('ratings__rating')
@@ -609,10 +549,6 @@ def explore(request, filter_type=None):
         "selected_difficulty": difficulty,
         "active_filter": active_filter,
     })
-
-
-
-
 
 def rate_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)

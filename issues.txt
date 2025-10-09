@@ -1,0 +1,3 @@
+1. some time mcqs are not make correct they are in a very irregular format like [] a.ans b.ans c.ans not sepratley
+2. results are not checking correctly
+3. Question Preferences: Not saving correctly — always defaults to “short”. 
