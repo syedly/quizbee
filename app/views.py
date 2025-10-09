@@ -573,23 +573,46 @@ def retake_quiz(request, quiz_id):
         return redirect("quiz_result", attempt_id=attempt.id)
     return render(request, "quiz-take.html", {"quiz": quiz, "questions": quiz.questions.all()})
 
-def explore(request):
+# def explore(request):
+#     quizzes = Quiz.objects.filter(is_public=True).annotate(
+#         avg_rating=Avg('ratings__rating')
+#     )
+#     return render(request, 'explore.html', {'quizzes': quizzes, 'categories': QUIZ_CATEGORIES, 'active_filter': 'explore'})
+
+
+def explore(request, filter_type=None):
     quizzes = Quiz.objects.filter(is_public=True).annotate(
         avg_rating=Avg('ratings__rating')
     )
-    return render(request, 'explore.html', {'quizzes': quizzes, 'categories': QUIZ_CATEGORIES, 'active_filter': 'explore'})
 
+    category = request.GET.get("category")
+    difficulty = request.GET.get("difficulty")
 
-def trending(request):
-    quizzes = Quiz.objects.filter(is_public=True).annotate(
-        avg_rating=Avg('ratings__rating')
-    ).filter(avg_rating__gt=3.5)
+    # Apply category and difficulty filters
+    if category:
+        quizzes = quizzes.filter(category__iexact=category)
+    if difficulty:
+        quizzes = quizzes.filter(difficulty=difficulty)
+
+    # 👇 Apply "Trending" filter if selected
+    if filter_type == "trending":
+        quizzes = quizzes.filter(avg_rating__gt=3.5)
+        active_filter = "trending"
+    else:
+        active_filter = "explore"
 
     return render(request, "explore.html", {
         "quizzes": quizzes,
         "categories": QUIZ_CATEGORIES,
-        "active_filter": "trending"
+        "difficulty_levels": DIFFICULTY_LEVELS,
+        "selected_category": category,
+        "selected_difficulty": difficulty,
+        "active_filter": active_filter,
     })
+
+
+
+
 
 def rate_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, id=quiz_id)

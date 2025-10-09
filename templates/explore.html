@@ -5,43 +5,65 @@
     <!-- Header -->
     <header class="flex items-center justify-between h-16 px-4 md:px-8 border-b border-gray-200 dark:border-gray-800">
       <div class="flex items-center gap-4">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Explore</h2>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+          {% if active_filter == 'trending' %}Trending Quizzes{% else %}Explore Quizzes{% endif %}
+        </h2>
       </div>
+
+      <!-- Search Bar (preserves category & difficulty) -->
       <div class="flex items-center gap-4">
-        <div class="relative hidden md:block">
+        <form method="get" action="" class="relative hidden md:block w-64">
+          {% if selected_category %}
+            <input type="hidden" name="category" value="{{ selected_category }}">
+          {% endif %}
+          {% if selected_difficulty %}
+            <input type="hidden" name="difficulty" value="{{ selected_difficulty }}">
+          {% endif %}
+
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 256 256">
               <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
             </svg>
           </div>
-          <input class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="Search" type="text"/>
-        </div>
+
+          <input
+            name="q"
+            value="{{ search_query|default:'' }}"
+            class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
+            placeholder="Search by topic..."
+            type="text"
+          />
+        </form>
       </div>
     </header>
 
     <!-- Main Content -->
     <div class="p-4 md:p-8">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
         <!-- Quiz List -->
         <div class="lg:col-span-2 space-y-6">
           {% for quiz in quizzes %}
           <div class="group bg-gray-100 dark:bg-gray-800/50 rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ quiz.topic }}</h3>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">Difficulty: {{ quiz.difficulty }}</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Category: {{ quiz.category }}</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Difficulty: {{ quiz.get_difficulty_display }}</p>
             <p class="text-gray-600 dark:text-gray-400 mt-1">{{ quiz.description }}</p>
 
             <!-- Rating and Add Button Row -->
             <div class="flex items-center justify-between mt-3">
               <!-- Average Rating with Stars -->
-              <div class="flex items-center gap-1 text-primary">
+              <div class="flex items-center gap-1">
                 {% if quiz.avg_rating %}
-                  {% for i in "12345" %}
-                    {% if forloop.counter <= quiz.avg_rating|floatformat:0 %}
-                      ★
-                    {% else %}
-                      ☆
-                    {% endif %}
-                  {% endfor %}
+                  <div class="flex items-center text-primary" aria-hidden="true">
+                    {% for i in "12345" %}
+                      {% if forloop.counter <= quiz.avg_rating|floatformat:0 %}
+                        <span class="text-xl">★</span>
+                      {% else %}
+                        <span class="text-xl text-gray-300 dark:text-gray-600">☆</span>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
                   <span class="ml-2 text-gray-800 dark:text-gray-200">{{ quiz.avg_rating|floatformat:1 }} / 5</span>
                 {% else %}
                   <span class="text-gray-500 dark:text-gray-400">No ratings yet</span>
@@ -58,8 +80,9 @@
             </div>
 
             <!-- Rating Form (Stars Only) -->
-            <form method="POST" action="{% url 'rate_quiz' quiz.id %}" class="flex gap-1 mt-3">
+            <form method="POST" action="{% url 'rate_quiz' quiz.id %}" class="flex gap-1 mt-3 rating-form">
               {% csrf_token %}
+              {% comment %} Use 5 radio stars; JS will highlight selected stars in this specific form {% endcomment %}
               {% for star in "12345" %}
                 <label class="cursor-pointer text-2xl text-gray-300 hover:text-primary transition-colors">
                   <input type="radio" name="rating" value="{{ star }}" class="hidden" required>
@@ -77,34 +100,55 @@
 
         <!-- Sidebar -->
         <aside class="space-y-6">
+          <!-- Main Filter Buttons -->
           <div class="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-xl">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Filters</h3>
             <nav class="space-y-2">
-              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="{% url "trending" %}">Trending</a>
-              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="{% url "explore" %}">Explore</a>
-              <a class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" href="#">For You</a>
+              <a href="{% url 'explore_filter' 'trending' %}"
+                 class="block w-full text-left px-4 py-2 rounded-lg {% if active_filter == 'trending' %}bg-primary text-white{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+                 Trending
+              </a>
+              <a href="{% url 'explore' %}"
+                 class="block w-full text-left px-4 py-2 rounded-lg {% if active_filter == 'explore' %}bg-primary text-white{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+                 Explore
+              </a>
+              <a href="#" class="block w-full text-left px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">For You</a>
             </nav>
           </div>
-            <!-- 👇 New Container (Under Filters) -->
+
+          <!-- Categories Filter -->
           <div class="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-xl">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Categories</h3>
 
             <ul id="categoryList" class="space-y-2 max-h-48 overflow-hidden transition-all duration-500">
               {% for category in categories %}
                 <li>
-                  <a href="#"
-                    class="block px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                  <a href="?category={{ category }}{% if selected_difficulty %}&difficulty={{ selected_difficulty }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                    class="block px-4 py-2 rounded-lg {% if selected_category == category %}bg-primary text-white{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
                     {{ category }}
                   </a>
                 </li>
               {% endfor %}
             </ul>
 
-            <!-- View More / Less Button -->
-            <button id="toggleCategories"
-              class="mt-4 text-primary font-medium hover:underline focus:outline-none">
+            <button id="toggleCategories" class="mt-4 text-primary font-medium hover:underline focus:outline-none">
               View More
             </button>
+          </div>
+
+          <!-- Difficulty Filter -->
+          <div class="bg-gray-100 dark:bg-gray-800/50 p-6 rounded-xl">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Difficulty</h3>
+            <ul class="space-y-2">
+              {% for key, value in difficulty_levels.items %}
+                <li>
+                  <a href="?difficulty={{ key }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                    class="block px-4 py-2 rounded-lg {% if selected_difficulty|stringformat:'s' == key|stringformat:'s' %}bg-primary text-white{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+                    {{ value }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
           </div>
         </aside>
       </div>
@@ -112,34 +156,38 @@
   </main>
 </div>
 
-<!-- JS to highlight stars with primary color -->
+<!-- JS: only attach to rating forms so other forms are unaffected -->
 <script>
-document.querySelectorAll('form').forEach(form => {
+document.querySelectorAll('form.rating-form').forEach(form => {
   const stars = form.querySelectorAll('input[name="rating"]');
   stars.forEach(star => {
-    star.addEventListener('change', e => {
+    star.addEventListener('change', () => {
+      // remove highlight in this form
       stars.forEach(s => s.parentElement.classList.remove('text-primary'));
+      // add highlight up to selected
       for (let i = 0; i < star.value; i++) {
-        stars[i].parentElement.classList.add('text-primary');
+        if (stars[i]) stars[i].parentElement.classList.add('text-primary');
       }
     });
   });
 });
 </script>
+
+<!-- View More / Less Categories -->
 <script>
   const list = document.getElementById("categoryList");
   const btn = document.getElementById("toggleCategories");
-
-  btn.addEventListener("click", () => {
-    if (list.classList.contains("max-h-48")) {
-      list.classList.remove("max-h-48");
-      btn.textContent = "View Less";
-    } else {
-      list.classList.add("max-h-48");
-      btn.textContent = "View More";
-    }
-  });
+  if (list && btn) {
+    btn.addEventListener("click", () => {
+      if (list.classList.contains("max-h-48")) {
+        list.classList.remove("max-h-48");
+        btn.textContent = "View Less";
+      } else {
+        list.classList.add("max-h-48");
+        btn.textContent = "View More";
+      }
+    });
+  }
 </script>
-
 
 {% endblock %}
