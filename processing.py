@@ -41,3 +41,9 @@ def extract_text_from_pdf(file) -> str:
         return " ".join(text.split())[:5000]  # limit to 5000 chars
     except Exception as e:
         return f"Could not extract text from PDF: {e}"
+
+def incorrect_answer(quiz, attempt):
+    total_questions = quiz.questions.count()
+    if not attempt:
+        return total_questions
+    return total_questions - attempt.score

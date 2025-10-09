@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from services import generate__quiz, check_short_answer, assistant, check_multiple_choice
-from processing import fetch_text_from_url, extract_text_from_pdf
+from processing import fetch_text_from_url, extract_text_from_pdf, incorrect_answer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Max
@@ -457,12 +457,6 @@ def quiz_take(request, quiz_id):
         return redirect("quiz_result", attempt_id=attempt.id)
 
     return render(request, "quiz-take.html", {"quiz": quiz, "questions": questions})
-
-def incorrect_answer(quiz, attempt):
-    total_questions = quiz.questions.count()
-    if not attempt:
-        return total_questions
-    return total_questions - attempt.score
 
 def quiz_result(request, attempt_id):
     attempt = get_object_or_404(QuizAttempt, id=attempt_id)
