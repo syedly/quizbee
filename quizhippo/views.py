@@ -6,7 +6,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions, parsers
-from app.models import Quiz, Question, Option, UserProfile
+from app.models import Quiz, Question, Option, UserProfile, QuizAttempt
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view
 from processing import (
     fetch_text_from_url,
@@ -26,6 +27,11 @@ from constants import (
     DEFAULT_QUESTION_TYPE,
     CHOOSE_OPTIONS,
     DEFAULT_CHOOSE,
+)
+from .serializers import (
+    UserProfileSerializer, QuizSerializer, QuizAttemptSerializer,
+    QuestionSerializer, OptionSerializer, QuizRatingSerializer,
+    ServerSerializer, ServerQuizSerializer
 )
 
 class LoginView(APIView):
@@ -273,3 +279,28 @@ class UpdatePreferencesAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+class QuizPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+class AllQuizzesAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        quizzes = (Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)).distinct()
+
+        # Attach attempt info
+        for quiz in quizzes:
+            attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
+            quiz.attempt = attempt
+            quiz.attempted = attempt is not None
+
+        # Paginate
+        paginator = QuizPagination()
+        page = paginator.paginate_queryset(quizzes, request)
+        serializer = QuizSerializer(page, many=True, context={'request': request})
+
+        return paginator.get_paginated_response(serializer.data)
