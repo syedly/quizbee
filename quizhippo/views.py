@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions, parsers
-from app.models import Quiz, Question, Option
+from app.models import Quiz, Question, Option, UserProfile
 from rest_framework.decorators import api_view
 from processing import (
     fetch_text_from_url,
@@ -242,4 +242,34 @@ def chat_assistant(request):
         return Response(
             {"error": "Something went wrong while processing your request."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+class UpdatePreferencesAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """
+        Update user preferences (e.g. light mode).
+        """
+        light_mode = request.data.get("light_mode")
+
+        if light_mode is None:
+            return Response(
+                {"error": "Missing field 'light_mode'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Convert "true"/"false" or "on"/"off" to boolean
+        light_mode_bool = str(light_mode).lower() in ["true", "on", "1"]
+
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        profile.light_mode = light_mode_bool
+        profile.save()
+
+        return Response(
+            {
+                "message": "Preferences updated successfully",
+                "light_mode": profile.light_mode
+            },
+            status=status.HTTP_200_OK
         )
