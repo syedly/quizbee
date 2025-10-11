@@ -1,12 +1,18 @@
 # quizhippo/views.py
 from django.contrib.auth import authenticate
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions, parsers
-from app.models import Quiz, Question, Option, UserProfile, QuizAttempt
+from app.models import (
+    Quiz, Question, 
+    Option, UserProfile, 
+    QuizAttempt, ServerQuiz, 
+    Server
+)
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view
 from processing import (
@@ -304,3 +310,31 @@ class AllQuizzesAPIView(APIView):
         serializer = QuizSerializer(page, many=True, context={'request': request})
 
         return paginator.get_paginated_response(serializer.data)
+
+class AddQuizToServerView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, server_id):
+        server = get_object_or_404(Server, id=server_id)
+
+        # Only allow server creator to add quizzes
+        if request.user != server.created_by:
+            return Response(
+                {"error": "You do not have permission to add quizzes to this server."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        quiz_id = request.data.get("quiz_id")
+        if not quiz_id:
+            return Response(
+                {"error": "quiz_id is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+
+        # Create the ServerQuiz link
+        server_quiz = ServerQuiz.objects.create(server=server, quiz=quiz)
+
+        serializer = ServerQuizSerializer(server_quiz)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
