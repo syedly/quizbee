@@ -285,6 +285,23 @@ class UpdatePreferencesAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )
+    
+    def get(self, request):
+        """
+        Retrieve current user preferences.
+        """
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            return Response(
+                {"light_mode": profile.light_mode},
+                status=status.HTTP_200_OK
+            )
+        except UserProfile.DoesNotExist:
+            # If no profile exists yet, assume default False
+            return Response(
+                {"light_mode": False},
+                status=status.HTTP_200_OK
+            )
 
 class QuizPagination(PageNumberPagination):
     page_size = 5
