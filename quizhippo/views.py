@@ -338,3 +338,29 @@ class AddQuizToServerView(APIView):
 
         serializer = ServerQuizSerializer(server_quiz)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class ServerDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, server_id):
+        user = request.user
+        server = get_object_or_404(Server, id=server_id)
+
+        # Quizzes created by the user
+        user_quizzes = Quiz.objects.filter(user=user)
+
+        # IDs of quizzes the user has attempted
+        attempted_quiz_ids = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
+
+        # Quizzes assigned to this server
+        server_quizzes = server.quizzes.all()
+
+        # Serialize data
+        server_data = {
+            "server": ServerSerializer(server).data,
+            "server_quizzes": QuizSerializer(server_quizzes, many=True).data,
+            "user_quizzes": QuizSerializer(user_quizzes, many=True).data,
+            "attempted_quiz_ids": list(attempted_quiz_ids),
+        }
+
+        return Response(server_data, status=status.HTTP_200_OK)
