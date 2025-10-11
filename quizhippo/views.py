@@ -2,19 +2,21 @@
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework import status, permissions, parsers
 from app.models import Quiz, Question, Option
+from rest_framework.decorators import api_view
 from processing import (
     fetch_text_from_url,
     extract_text_from_pdf,
     parse_quiz_response,
 )
-from services import generate__quiz
+from services import (
+    generate__quiz, 
+    assistant,
+)
 from constants import (
     LANGUAGES,
     DEFAULT_LANGUAGE,
@@ -217,3 +219,27 @@ class GenerateQuizAPI(APIView):
                 {"status": "error", "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+@api_view(['POST'])
+def chat_assistant(request):
+    """
+    Simple API endpoint to handle chat queries using your assistant function.
+    """
+    query = request.data.get('query', '').strip()
+
+    if not query:
+        return Response(
+            {"error": "Query is required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        response = assistant(query)
+        return Response({"response": response}, status=status.HTTP_200_OK)
+    except Exception as e:
+        # Optional: log the error before returning response
+        print(f"Error in chat_assistant: {e}")
+        return Response(
+            {"error": "Something went wrong while processing your request."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
