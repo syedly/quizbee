@@ -431,3 +431,15 @@ class ChangePassword(APIView):
             {"message": "Password changed successfully."},
             status=status.HTTP_200_OK
         )
+    
+class DeleteQuiz(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, quiz_id):
+        user = request.user
+        quiz = get_object_or_404(Quiz, id=quiz_id, user=user)
+        quiz.delete()
+        return Response(
+            {"message": "Quiz deleted successfully."},
+            status=status.HTTP_200_OK
+        )

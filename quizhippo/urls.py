@@ -5,7 +5,7 @@ from .views import (
     chat_assistant, UpdatePreferencesAPIView, 
     AllQuizzesAPIView, AddQuizToServerView,
     ServerDetailView, DeleteAccount,
-    ChangePassword
+    ChangePassword, DeleteQuiz,
     )
 
 urlpatterns = [
@@ -20,4 +20,5 @@ urlpatterns = [
     path("servers/<int:server_id>/", ServerDetailView.as_view(), name="server-detail"),
     path("delete-account/", DeleteAccount.as_view(), name="delete-account"),
     path("change-pwd/", ChangePassword.as_view(), name="change-pwd"),
+    path("quiz/<int:quiz_id>/delete/", DeleteQuiz.as_view(), name="delete_quiz"),
 ]
