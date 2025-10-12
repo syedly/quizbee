@@ -4,8 +4,9 @@ from .views import (
     LogoutView, GenerateQuizAPI, 
     chat_assistant, UpdatePreferencesAPIView, 
     AllQuizzesAPIView, CheckQuizAttempt,
-    DeleteAccount,
+    DeleteAccount, QuizVisibilityAPI,
     ChangePassword, DeleteQuiz,
+    ExploreQuizzesAPI,
     )
 
 urlpatterns = [
@@ -20,4 +21,7 @@ urlpatterns = [
     path("change-pwd/", ChangePassword.as_view(), name="change-pwd"),
     path("quiz/<int:quiz_id>/delete/", DeleteQuiz.as_view(), name="delete_quiz"),
     path("quiz/attempts/", CheckQuizAttempt.as_view(), name="check_quiz_attempts"),
+    path("quiz/<int:quiz_id>/visibility/", QuizVisibilityAPI.as_view(), name="quiz_visibility"),
+    path("explore/", ExploreQuizzesAPI.as_view(), name="explore_quizzes"),
+    path("explore/<str:filter_type>/", ExploreQuizzesAPI.as_view(), name="explore_quizzes_filtered"),
 ]

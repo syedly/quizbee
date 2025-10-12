@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions, parsers
+from django.db.models import Avg
 from app.models import (
     Quiz, Question, 
     Option, UserProfile, 
@@ -33,6 +34,7 @@ from constants import (
     DEFAULT_QUESTION_TYPE,
     CHOOSE_OPTIONS,
     DEFAULT_CHOOSE,
+    QUIZ_CATEGORIES,
 )
 from .serializers import (
     UserProfileSerializer, QuizSerializer, QuizAttemptSerializer,
@@ -419,5 +421,87 @@ class DeleteQuiz(APIView):
         quiz.delete()
         return Response(
             {"message": "Quiz deleted successfully."},
+            status=status.HTTP_200_OK
+        )
+
+class QuizVisibilityAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, quiz_id):
+        """
+        Toggle quiz visibility (public/private)
+        """
+        quiz = get_object_or_404(Quiz, id=quiz_id, user=request.user)
+        is_public = request.data.get("is_public")
+
+        # Validate input
+        if is_public is None:
+            return Response(
+                {"error": "Missing field 'is_public'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Convert to boolean safely
+        quiz.is_public = str(is_public).lower() in ["true", "1", "yes", "on"]
+        quiz.save()
+
+        return Response(
+            {
+                "message": f"Quiz visibility updated successfully!",
+                "quiz_id": quiz.id,
+                "is_public": quiz.is_public
+            },
+            status=status.HTTP_200_OK
+        )
+
+class ExploreQuizzesAPI(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, filter_type=None):
+        quizzes = Quiz.objects.filter(is_public=True).annotate(
+            avg_rating=Avg('ratings__rating')
+        )
+
+        category = request.GET.get("category")
+        difficulty = request.GET.get("difficulty")
+
+        # Apply category filter
+        if category:
+            quizzes = quizzes.filter(category__iexact=category)
+
+        # Apply difficulty filter
+        if difficulty:
+            quizzes = quizzes.filter(difficulty=difficulty)
+
+        # Apply "trending" filter
+        if filter_type == "trending":
+            quizzes = quizzes.filter(avg_rating__gt=3.5)
+            active_filter = "trending"
+        else:
+            active_filter = "explore"
+
+        # Prepare response data
+        data = [
+            {
+                "id": quiz.id,
+                "title": quiz.topic,
+                "category": quiz.category,
+                "difficulty": quiz.difficulty,
+                "is_public": quiz.is_public,
+                "avg_rating": quiz.avg_rating or 0,
+                "created_by": quiz.user.username,
+            }
+            for quiz in quizzes
+        ]
+
+        return Response(
+            {
+                "active_filter": active_filter,
+                "categories": QUIZ_CATEGORIES,
+                "difficulty_levels": DIFFICULTY_LEVELS,
+                "selected_category": category,
+                "selected_difficulty": difficulty,
+                "results": data,
+            },
             status=status.HTTP_200_OK
         )
