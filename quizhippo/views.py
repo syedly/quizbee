@@ -381,3 +381,25 @@ class ServerDetailView(APIView):
         }
 
         return Response(server_data, status=status.HTTP_200_OK)
+    
+class DeleteAccount(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        # Invalidate tokens before deleting
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+        except Exception:
+            pass  # If token invalid, just ignore
+
+        username = user.username
+        user.delete()
+        return Response(
+            {"message": f"User '{username}' deleted successfully."},
+            status=status.HTTP_200_OK
+        )
