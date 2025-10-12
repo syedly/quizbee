@@ -315,72 +315,50 @@ class AllQuizzesAPIView(APIView):
         user = request.user
         quizzes = (Quiz.objects.filter(user=user) | Quiz.objects.filter(shared_with=user)).distinct()
 
-        # Attach attempt info
-        for quiz in quizzes:
-            attempt = QuizAttempt.objects.filter(user=user, quiz=quiz).first()
-            quiz.attempt = attempt
-            quiz.attempted = attempt is not None
-
         # Paginate
         paginator = QuizPagination()
         page = paginator.paginate_queryset(quizzes, request)
         serializer = QuizSerializer(page, many=True, context={'request': request})
 
         return paginator.get_paginated_response(serializer.data)
-
-class AddQuizToServerView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, server_id):
-        server = get_object_or_404(Server, id=server_id)
-
-        # Only allow server creator to add quizzes
-        if request.user != server.created_by:
-            return Response(
-                {"error": "You do not have permission to add quizzes to this server."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        quiz_id = request.data.get("quiz_id")
-        if not quiz_id:
-            return Response(
-                {"error": "quiz_id is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        quiz = get_object_or_404(Quiz, id=quiz_id)
-
-        # Create the ServerQuiz link
-        server_quiz = ServerQuiz.objects.create(server=server, quiz=quiz)
-
-        serializer = ServerQuizSerializer(server_quiz)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-class ServerDetailView(APIView):
+class CheckQuizAttempt(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, server_id):
+    def get(self, request):
         user = request.user
-        server = get_object_or_404(Server, id=server_id)
 
-        # Quizzes created by the user
-        user_quizzes = Quiz.objects.filter(user=user)
+        # Get all quizzes
+        all_quizzes = Quiz.objects.all()
 
-        # IDs of quizzes the user has attempted
-        attempted_quiz_ids = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
+        # Get IDs of quizzes attempted by the user
+        attempted_ids = QuizAttempt.objects.filter(user=user).values_list("quiz_id", flat=True)
 
-        # Quizzes assigned to this server
-        server_quizzes = server.quizzes.all()
+        # Separate attempted and not attempted
+        attempted = Quiz.objects.filter(id__in=attempted_ids)
+        not_attempted = Quiz.objects.exclude(id__in=attempted_ids)
 
-        # Serialize data
-        server_data = {
-            "server": ServerSerializer(server).data,
-            "server_quizzes": QuizSerializer(server_quizzes, many=True).data,
-            "user_quizzes": QuizSerializer(user_quizzes, many=True).data,
-            "attempted_quiz_ids": list(attempted_quiz_ids),
+        # Build clean JSON response
+        data = {
+            "attempted": [
+                {
+                    "id": quiz.id,
+                    "title": quiz.topic,
+                    
+                }
+                for quiz in attempted
+            ],
+            "not_attempted": [
+                {
+                    "id": quiz.id,
+                    "title": quiz.topic,
+                    
+                }
+                for quiz in not_attempted
+            ],
         }
 
-        return Response(server_data, status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
     
 class DeleteAccount(APIView):
     permission_classes = [permissions.IsAuthenticated]
