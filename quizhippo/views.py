@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions, parsers
 from django.db.models import Avg
 from django.db.models import Max
+from django.db.models import Q
 from app.models import (
     Quiz, Question, 
     Option, UserProfile, 
@@ -706,3 +707,150 @@ class ShareQuizAPIView(APIView):
             {"message": f"Quiz shared successfully with {username}."},
             status=status.HTTP_200_OK
         )
+    
+class CreateServerAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        name = request.data.get("name")
+        description = request.data.get("description")
+
+        if not name:
+            return Response({"error": "Server name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        server = Server.objects.create(
+            name=name,
+            description=description or "",
+            created_by=request.user
+        )
+        server.members.add(request.user)
+
+        return Response(
+            {
+                "message": f"Server '{name}' created successfully!",
+                "server_id": server.id,
+                "code": server.code
+            },
+            status=status.HTTP_201_CREATED
+        )
+    
+class JoinServerAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        code = request.data.get("code", "").strip().upper()
+
+        if not code:
+            return Response({"error": "Server code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            server = Server.objects.get(code=code)
+        except Server.DoesNotExist:
+            return Response({"error": "Invalid code!"}, status=status.HTTP_404_NOT_FOUND)
+
+        server.members.add(request.user)
+        return Response(
+            {"message": f"Joined '{server.name}' successfully!", "server_id": server.id},
+            status=status.HTTP_200_OK
+        )
+
+class ServerListAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # ✅ Fetch all servers where user is a member
+        servers = Server.objects.filter(members=user).distinct()
+
+        all_data = []
+
+        for server in servers:
+            # ✅ Get all quiz objects linked to this server
+            server_quizzes = ServerQuiz.objects.filter(server=server).select_related('quiz')
+            quizzes = [sq.quiz for sq in server_quizzes]  # extract the Quiz objects
+
+            # ✅ Get all quizzes the user has attempted (only Quiz IDs)
+            attempted_quiz_ids = QuizAttempt.objects.filter(
+                user=user,
+                quiz__in=quizzes
+            ).values_list("quiz_id", flat=True)
+
+            # ✅ Build the server data
+            server_data = {
+                "id": server.id,
+                "name": server.name,
+                "description": server.description,
+                "code": server.code,
+                "created_by": server.created_by.username,
+                "created_at": server.created_at,
+                "quizzes": [
+                    {
+                        "id": quiz.id,
+                        "title": quiz.topic,
+                        "category": quiz.category,
+                        "is_public": quiz.is_public,
+                        "attempted": quiz.id in attempted_quiz_ids,
+                    }
+                    for quiz in quizzes
+                ],
+            }
+
+            all_data.append(server_data)
+
+        return Response({"servers": all_data}, status=status.HTTP_200_OK)
+
+class ServerDetailAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, server_id):
+        server = get_object_or_404(Server, id=server_id)
+
+        if request.user not in server.members.all():
+            return Response({"error": "You are not a member of this server."}, status=status.HTTP_403_FORBIDDEN)
+
+        quizzes = server.quizzes.all()
+        attempted_quiz_ids = QuizAttempt.objects.filter(
+            user=request.user, quiz__in=quizzes
+        ).values_list("quiz_id", flat=True)
+
+        data = {
+            "id": server.id,
+            "name": server.name,
+            "description": server.description,
+            "code": server.code,
+            "created_by": server.created_by.username,
+            "created_at": server.created_at,
+            "quizzes": [
+                {
+                    "id": quiz.id,
+                    "title": quiz.title,
+                    "category": quiz.category,
+                    "is_public": quiz.is_public,
+                    "attempted": quiz.id in attempted_quiz_ids,
+                }
+                for quiz in quizzes
+            ],
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+class AddQuizToServerAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, server_id):
+        server = get_object_or_404(Server, id=server_id)
+
+        # Only server owner can add quizzes
+        if request.user != server.created_by:
+            return Response({"error": "You are not allowed to add quizzes to this server."}, status=status.HTTP_403_FORBIDDEN)
+
+        quiz_id = request.data.get("quiz_id")
+        if not quiz_id:
+            return Response({"error": "quiz_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        ServerQuiz.objects.create(server=server, quiz=quiz)
+
+        return Response({"message": f"Quiz '{quiz.title}' added to server '{server.name}' successfully."},
+                        status=status.HTTP_201_CREATED)

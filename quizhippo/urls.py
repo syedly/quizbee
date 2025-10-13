@@ -8,7 +8,10 @@ from .views import (
     ChangePassword, DeleteQuiz,
     ExploreQuizzesAPI, ChangeUsernameOrEmailAPIView,
     RateQuizAPI, AddToMyQuizAPI,
-    ProfileAPIView, ShareQuizAPIView
+    ProfileAPIView, ShareQuizAPIView,
+    CreateServerAPIView, JoinServerAPIView,
+    ServerDetailAPIView, AddQuizToServerAPIView,
+    ServerListAPIView
     )
 
 urlpatterns = [
@@ -31,4 +34,9 @@ urlpatterns = [
     path("quizzes/<int:quiz_id>/save/", AddToMyQuizAPI.as_view(), name="add-to-my-quiz"),
     path('profile/', ProfileAPIView.as_view(), name='profile-api'),
     path('share-quiz/<int:quiz_id>/', ShareQuizAPIView.as_view(), name='share-quiz'),
+    path('servers/create/', CreateServerAPIView.as_view(), name='create-server'),
+    path('servers/join/', JoinServerAPIView.as_view(), name='join-server'),
+    path('servers/<int:server_id>/', ServerDetailAPIView.as_view(), name='server-detail'),
+    path('servers/<int:server_id>/add-quiz/', AddQuizToServerAPIView.as_view(), name='add-quiz-to-server'),
+    path('servers/', ServerListAPIView.as_view(), name='server-list'),
 ]
