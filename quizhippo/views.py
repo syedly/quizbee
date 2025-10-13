@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions, parsers
 from django.db.models import Avg
+from django.db.models import Max
 from app.models import (
     Quiz, Question, 
     Option, UserProfile, 
@@ -621,3 +622,58 @@ class AddToMyQuizAPI(APIView):
             {"message": message},
             status=status.HTTP_200_OK
         )
+
+class ProfileAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Try to get or create user profile
+        profile, created = UserProfile.objects.get_or_create(user=user)
+
+        # Fetch related data
+        servers = Server.objects.filter(created_by=user)
+        quizzes_created = Quiz.objects.filter(user=user).count()
+        quizzes_completed = QuizAttempt.objects.filter(user=user).count()
+        best_score = QuizAttempt.objects.filter(user=user).aggregate(
+            Max('score')
+        )['score__max'] or 0
+
+        # Quizzes in user's servers
+        server_quizzes = ServerQuiz.objects.filter(server__in=servers).values_list('quiz', flat=True)
+        attempts = QuizAttempt.objects.filter(quiz__in=server_quizzes).select_related('user', 'quiz')
+
+        # Build response
+        data = {
+            "username": user.username,
+            "email": user.email,
+            "avatar": (
+                request.build_absolute_uri(profile.avatar.url)
+                if profile.avatar
+                else None
+            ),
+            "quizzes_created": quizzes_created,
+            "quizzes_completed": quizzes_completed,
+            "best_score": best_score,
+            "servers": [
+                {
+                    "id": server.id,
+                    "name": server.name,
+                    "description": getattr(server, "description", ""),  # 👈 Added description
+                    "created_at": server.created_at,
+                }
+                for server in servers
+            ],
+            "attempts": [
+                {
+                    "quiz_title": attempt.quiz.title,
+                    "score": attempt.score,
+                    "date_attempted": attempt.created_at,
+                    "user": attempt.user.username,
+                }
+                for attempt in attempts
+            ],
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
