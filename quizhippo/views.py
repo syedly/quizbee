@@ -668,7 +668,7 @@ class ProfileAPIView(APIView):
             ],
             "attempts": [
                 {
-                    "quiz_title": attempt.quiz.title,
+                    "quiz_title": attempt.quiz.topic,
                     "score": attempt.score,
                     "date_attempted": attempt.created_at,
                     "user": attempt.user.username,
@@ -806,14 +806,24 @@ class ServerDetailAPIView(APIView):
     def get(self, request, server_id):
         server = get_object_or_404(Server, id=server_id)
 
+        # Only allow members to view
         if request.user not in server.members.all():
-            return Response({"error": "You are not a member of this server."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "You are not a member of this server."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-        quizzes = server.quizzes.all()
+        # ✅ Fetch quiz IDs from the through model
+        quiz_ids = server.quizzes.values_list("quiz", flat=True)
+        quizzes = Quiz.objects.filter(id__in=quiz_ids)
+
+        # ✅ Get user's attempted quizzes
         attempted_quiz_ids = QuizAttempt.objects.filter(
-            user=request.user, quiz__in=quizzes
+            user=request.user,
+            quiz__in=quizzes
         ).values_list("quiz_id", flat=True)
 
+        # ✅ Build response
         data = {
             "id": server.id,
             "name": server.name,
@@ -824,7 +834,7 @@ class ServerDetailAPIView(APIView):
             "quizzes": [
                 {
                     "id": quiz.id,
-                    "title": quiz.title,
+                    "title": quiz.topic,
                     "category": quiz.category,
                     "is_public": quiz.is_public,
                     "attempted": quiz.id in attempted_quiz_ids,
@@ -852,5 +862,5 @@ class AddQuizToServerAPIView(APIView):
         quiz = get_object_or_404(Quiz, id=quiz_id)
         ServerQuiz.objects.create(server=server, quiz=quiz)
 
-        return Response({"message": f"Quiz '{quiz.title}' added to server '{server.name}' successfully."},
+        return Response({"message": f"Quiz '{quiz.topic}' added to server '{server.name}' successfully."},
                         status=status.HTTP_201_CREATED)
