@@ -677,3 +677,32 @@ class ProfileAPIView(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
+    
+class ShareQuizAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id, user=request.user)
+        username = request.data.get("username")
+
+        if not username:
+            return Response(
+                {"error": "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user_to_share = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"error": f"User '{username}' does not exist."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # ✅ Add the user to the shared_with field
+        quiz.shared_with.add(user_to_share)
+
+        return Response(
+            {"message": f"Quiz shared successfully with {username}."},
+            status=status.HTTP_200_OK
+        )
