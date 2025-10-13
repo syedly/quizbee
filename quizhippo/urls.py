@@ -7,6 +7,7 @@ from .views import (
     DeleteAccount, QuizVisibilityAPI,
     ChangePassword, DeleteQuiz,
     ExploreQuizzesAPI, ChangeUsernameOrEmailAPIView,
+    RateQuizAPI, AddToMyQuizAPI,
     )
 
 urlpatterns = [
@@ -25,4 +26,6 @@ urlpatterns = [
     path("explore/", ExploreQuizzesAPI.as_view(), name="explore_quizzes"),
     path("explore/<str:filter_type>/", ExploreQuizzesAPI.as_view(), name="explore_quizzes_filtered"),
     path("update-profile/", ChangeUsernameOrEmailAPIView.as_view(), name="update_profile"),
+    path("quizzes/<int:quiz_id>/rate/", RateQuizAPI.as_view(), name="rate-quiz"),
+    path("quizzes/<int:quiz_id>/save/", AddToMyQuizAPI.as_view(), name="add-to-my-quiz"),
 ]

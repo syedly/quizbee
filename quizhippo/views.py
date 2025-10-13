@@ -12,7 +12,7 @@ from app.models import (
     Quiz, Question, 
     Option, UserProfile, 
     QuizAttempt, ServerQuiz, 
-    Server
+    Server, QuizRating
 )
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view
@@ -577,3 +577,47 @@ class ChangeUsernameOrEmailAPIView(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
+    
+class RateQuizAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        rating_value = int(request.data.get("rating", 0))
+
+        if not (1 <= rating_value <= 5):
+            return Response(
+                {"error": "Rating must be between 1 and 5."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        QuizRating.objects.update_or_create(
+            quiz=quiz,
+            user=request.user,
+            defaults={"rating": rating_value},
+        )
+
+        return Response(
+            {"message": "Rating submitted successfully."},
+            status=status.HTTP_200_OK
+        )
+
+class AddToMyQuizAPI(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        user = request.user
+
+        if user in quiz.shared_with.all():
+            # Optional: toggle behavior
+            quiz.shared_with.remove(user)
+            message = "Quiz removed from your list."
+        else:
+            quiz.shared_with.add(user)
+            message = "Quiz added to your list."
+
+        return Response(
+            {"message": message},
+            status=status.HTTP_200_OK
+        )
