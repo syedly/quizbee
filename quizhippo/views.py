@@ -505,3 +505,51 @@ class ExploreQuizzesAPI(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+class ChangeUsernameOrEmailAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        """
+        Update user's username, email, and profile image.
+        """
+        user = request.user
+        new_username = request.data.get("new_username", "").strip()
+        new_email = request.data.get("new_email", "").strip()
+        profile_image = request.FILES.get("profile_image")
+
+        # ✅ Validate and update username
+        if new_username:
+            if User.objects.filter(username=new_username).exclude(id=user.id).exists():
+                return Response(
+                    {"error": "Username already taken"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.username = new_username
+
+        # ✅ Validate and update email
+        if new_email:
+            if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+                return Response(
+                    {"error": "Email already in use"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.email = new_email
+
+        user.save()
+
+        # ✅ Update or create profile image
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        if profile_image:
+            profile.avatar = profile_image
+            profile.save()
+
+        return Response(
+            {
+                "message": "Profile updated successfully",
+                "username": user.username,
+                "email": user.email,
+                "avatar": request.build_absolute_uri(profile.avatar.url) if profile.avatar else None,
+            },
+            status=status.HTTP_200_OK
+        )

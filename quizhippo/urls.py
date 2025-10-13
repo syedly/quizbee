@@ -6,7 +6,7 @@ from .views import (
     AllQuizzesAPIView, CheckQuizAttempt,
     DeleteAccount, QuizVisibilityAPI,
     ChangePassword, DeleteQuiz,
-    ExploreQuizzesAPI,
+    ExploreQuizzesAPI, ChangeUsernameOrEmailAPIView,
     )
 
 urlpatterns = [
@@ -24,4 +24,5 @@ urlpatterns = [
     path("quiz/<int:quiz_id>/visibility/", QuizVisibilityAPI.as_view(), name="quiz_visibility"),
     path("explore/", ExploreQuizzesAPI.as_view(), name="explore_quizzes"),
     path("explore/<str:filter_type>/", ExploreQuizzesAPI.as_view(), name="explore_quizzes_filtered"),
+    path("update-profile/", ChangeUsernameOrEmailAPIView.as_view(), name="update_profile"),
 ]
