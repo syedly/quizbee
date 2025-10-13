@@ -553,3 +553,27 @@ class ChangeUsernameOrEmailAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+    def get(self, request):
+        user = request.user
+
+        try:
+            profile = UserProfile.objects.get(user=user)
+        except UserProfile.DoesNotExist:
+            return Response(
+                {"error": "User profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        data = {
+            "username": user.username,
+            "email": user.email,
+            "bio": profile.bio,
+            "light_mode": profile.light_mode,
+            "avatar": (
+                request.build_absolute_uri(profile.avatar.url)
+                if profile.avatar else None
+            ),
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
