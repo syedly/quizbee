@@ -864,3 +864,24 @@ class AddQuizToServerAPIView(APIView):
 
         return Response({"message": f"Quiz '{quiz.topic}' added to server '{server.name}' successfully."},
                         status=status.HTTP_201_CREATED)
+
+class DeleteServerAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, server_id):
+        server = get_object_or_404(Server, id=server_id)
+
+        # Only the creator can delete the server
+        if request.user != server.created_by:
+            return Response(
+                {"error": "You are not allowed to delete this server."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        server_name = server.name
+        server.delete()
+
+        return Response(
+            {"message": f"Server '{server_name}' deleted successfully."},
+            status=status.HTTP_200_OK
+        )
