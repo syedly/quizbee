@@ -885,3 +885,70 @@ class DeleteServerAPIView(APIView):
             {"message": f"Server '{server_name}' deleted successfully."},
             status=status.HTTP_200_OK
         )
+    
+# class QuizDetailAPIView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get(self, request, quiz_id):
+#         quiz = get_object_or_404(Quiz, id=quiz_id)
+
+#         # Get all related questions with their options
+#         questions = quiz.questions.prefetch_related("options").all()
+
+#         data = {
+#             "id": quiz.id,
+#             "topic": quiz.topic,
+#             "category": quiz.category,
+#             "difficulty": quiz.difficulty,
+#             "is_public": quiz.is_public,
+#             "created_by": quiz.user.username if quiz.user else None,
+#             "average_rating": quiz.average_rating(),
+#             "rating_distribution": quiz.rating_distribution(),
+#             "questions": [
+#                 {
+#                     "id": q.id,
+#                     "text": q.text,
+#                     "question_type": q.question_type,
+#                     "difficulty": q.difficulty,
+#                     "options": [opt.text for opt in q.options.all()],
+#                     "correct_answer": q.answer,  # ⚠️ optional — remove if you don’t want users to see this
+#                 }
+#                 for q in questions
+#             ]
+#         }
+
+#         return Response(data, status=status.HTTP_200_OK)
+
+class QuizDetailAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+
+        # Build quiz data
+        data = {
+            "id": quiz.id,
+            "topic": quiz.topic,
+            "category": quiz.category,
+            "difficulty": quiz.difficulty,
+            "is_public": quiz.is_public,
+            "created_by": quiz.user.username if quiz.user else None,
+            "average_rating": quiz.average_rating(),
+            "rating_distribution": quiz.rating_distribution(),
+            "questions": []
+        }
+
+        # Get related questions and their options
+        for q in quiz.questions.all():
+            options = [opt.text for opt in q.options.all()]  # get all options for each question
+
+            data["questions"].append({
+                "id": q.id,
+                "text": q.text,
+                "question_type": q.question_type,
+                "difficulty": q.difficulty,
+                "options": options,  # all available options (if any)
+                "answer": q.answer,  # ✅ include correct answer here
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
