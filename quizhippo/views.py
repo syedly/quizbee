@@ -952,3 +952,49 @@ class QuizDetailAPIView(APIView):
             })
 
         return Response(data, status=status.HTTP_200_OK)
+
+class ResultView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        
+        # Get the latest attempt by the user for this quiz
+        attempt = QuizAttempt.objects.filter(user=request.user, quiz=quiz).order_by('-created_at').first()
+        if not attempt:
+            return Response({"error": "No attempt found for this quiz."}, status=status.HTTP_404_NOT_FOUND)
+        
+        total_questions = quiz.questions.count()
+        correct_answers = attempt.score
+        incorrect_answers = total_questions - correct_answers
+
+        # Prepare incorrect question details
+        incorrect_questions = []
+        for question in quiz.questions.all():
+            user_answer = attempt.answers.get(str(question.id)) if attempt.answers else None
+            if user_answer != question.answer:
+                incorrect_questions.append({
+                    "id": question.id,
+                    "text": question.text,
+                    "user_answer": user_answer,
+                    "correct_answer": question.answer,
+                })
+
+        data = {
+            "quiz": {
+                "id": quiz.id,
+                "topic": quiz.topic,
+                "category": quiz.category,
+                "difficulty": quiz.difficulty,
+            },
+            "attempt": {
+                "id": attempt.id,
+                "score": attempt.score,
+                "total_questions": total_questions,
+                "correct_answers": correct_answers,
+                "incorrect_count": incorrect_answers,
+                "date_attempted": attempt.created_at,
+            },
+            "incorrect_questions": incorrect_questions,
+        }
+        return Response(data, status=status.HTTP_200_OK)
