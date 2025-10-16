@@ -3,3 +3,4 @@
 3. Question Preferences: Not saving correctly — always defaults to “short”. 
 4. Incorrect answers display differently (use a unified display style matching the default result view). 
 5. User Answers: Not displaying correctly in results. 
+6. Due to react the urls are becoming same i ave to change them too

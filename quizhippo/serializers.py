@@ -1,10 +1,14 @@
-# quizapp/serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from app.models import (
     UserProfile, Quiz, QuizAttempt, Question, Option,
     QuizRating, Server, ServerQuiz
 )
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from django.shortcuts import get_object_or_404
 
 # ---------------------------
 # User & Profile Serializers

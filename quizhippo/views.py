@@ -26,6 +26,8 @@ from processing import (
 from services import (
     generate__quiz, 
     assistant,
+    check_multiple_choice,
+    check_short_answer,
 )
 from constants import (
     LANGUAGES,
@@ -998,3 +1000,70 @@ class ResultView(APIView):
             "incorrect_questions": incorrect_questions,
         }
         return Response(data, status=status.HTTP_200_OK)
+
+# In your views.py
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from app.models import Quiz, QuizAttempt  # Adjust import path as needed
+from .serializers import QuizSerializer  # Adjust import path as needed
+# Assuming check_short_answer and check_multiple_choice are defined elsewhere; import if needed
+
+class QuizSubmitView(APIView):
+    permission_classes = [IsAuthenticated]  # Auth for both GET and POST
+
+    def get(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        serializer = QuizSerializer(quiz)
+        # Extract questions to avoid duplication in response
+        quiz_data = serializer.data.copy()
+        questions = quiz_data.pop('questions', [])
+        return Response({
+            "quiz": quiz_data,
+            "questions": questions
+        })
+
+    def post(self, request, quiz_id):
+        quiz = get_object_or_404(Quiz, id=quiz_id)
+        questions = quiz.questions.all()
+
+        user_answers = request.data.get("answers", {})
+        # Removed the strict check to allow empty submissions (score 0)
+        # if not user_answers:
+        #     return Response({"error": "No answers submitted."}, status=status.HTTP_400_BAD_REQUEST)
+
+        marks = 0
+        for question in questions:
+            user_answer = user_answers.get(str(question.id))
+            if not user_answer:
+                continue
+
+            if question.question_type == "SHORT":
+                if check_short_answer(user_answer, question.answer):
+                    marks += 1
+            elif question.question_type == "MCQ":
+                if check_multiple_choice(user_answer, question.answer):
+                    marks += 1
+            elif user_answer.strip().lower() == question.answer.strip().lower():
+                marks += 1
+
+        attempt = QuizAttempt.objects.create(
+            user=request.user,
+            quiz=quiz,
+            score=marks,
+            answers=user_answers
+        )
+
+        total_questions = questions.count()
+        result_summary = {
+            "attempt_id": attempt.id,
+            "quiz_id": quiz.id,
+            "score": marks,
+            "total_questions": total_questions,
+            "correct_answers": marks,
+            "incorrect_answers": total_questions - marks,
+        }
+
+        return Response(result_summary, status=status.HTTP_201_CREATED)
