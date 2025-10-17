@@ -58,7 +58,7 @@
                     <span class="tooltip">Retake Quiz</span>
                   </a>
                   <!-- View Result -->
-                  <a href="{% url 'quiz_result' quiz.attempt.id %}" class="icon-btn group relative">
+                  <a href="{% url 'quizz_result' quiz.attempt.id %}" class="icon-btn group relative">
                     <span class="material-symbols-outlined">visibility</span>
                     <span class="tooltip">View Result</span>
                   </a>
@@ -71,7 +71,7 @@
                 {% endif %}
 
                 <!-- Info -->
-                <a href="{% url 'quiz_detail' quiz.id %}" class="icon-btn group relative">
+                <a href="{% url 'quizz_detail' quiz.id %}" class="icon-btn group relative">
                   <span class="material-symbols-outlined">info</span>
                   <span class="tooltip">Quiz Details</span>
                 </a>
