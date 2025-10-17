@@ -1,0 +1,255 @@
+/* ===== Quiz Input Bar (paste into base.css) ===== */
+.qz-wrapper {
+  max-width: 1180px;
+  margin: 18px auto;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+/* background area that holds both rows */
+.qz-area {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* TOP ROW (big white rounded subject / topic bar) */
+.qz-top {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* subject label icon + text at left inside the white bar */
+.qz-subject {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+  flex: 0 0 auto;
+}
+
+/* colored square icon like the screenshot */
+.qz-subject .qz-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg,#ffd57a 0%, #f2bc2e 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* the big area containing selects: subject / topic / subtopic */
+.qz-subject-controls {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  width:100%;
+}
+
+/* the select controls inside TOP row */
+.qz-top select, .qz-top .qz-select-like {
+  height:44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #eef0f3;
+  background: transparent;
+  min-width: 220px;
+  font-size: 14px;
+  color: #333;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* fake placeholder style for disabled selects */
+.qz-top select:disabled {
+  color: #9aa0a6;
+  background: transparent;
+}
+
+/* small caret on the right of select */
+.qz-top .qz-select-like {
+  position: relative;
+  padding-right: 28px;
+}
+.qz-top .qz-select-like::after {
+  content: '▾';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  pointer-events: none;
+}
+
+/* collapse handle at far right of top row */
+.qz-collapse-btn {
+  background: #e6e3ee;
+  border: none;
+  width: 40px;
+  height: 36px;
+  border-radius: 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex: 0 0 auto;
+}
+.qz-collapse-btn:active { transform: translateY(1px); }
+
+/* PROMPT input appears below TOP row when 'Prompt' selected */
+.qz-prompt-row {
+  display: none; /* shown by JS when needed */
+  margin-top: 8px;
+}
+.qz-prompt-row .qz-prompt {
+  width: 100%;
+  height:44px;
+  padding:10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e6e8ec;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+/* BOTTOM ROW — pills and build button */
+.qz-bottom {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-start;
+  background: transparent;
+  padding: 6px 0;
+  flex-wrap:wrap;
+}
+
+/* pill style used by Type, # Questions, Language, Difficulty */
+.qz-pill {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  min-width: 150px;
+  box-shadow: 0 4px 10px rgba(2,6,23,0.06);
+}
+
+/* pill icon square */
+.qz-pill .pill-icon {
+  width:36px;
+  height:36px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  flex:0 0 auto;
+}
+
+/* colors matching screenshot */
+.qz-pill .pill-icon.purple { background: linear-gradient(180deg,#8c7ef1,#6a59d9); }
+.qz-pill .pill-icon.red    { background: linear-gradient(180deg,#f16a6a,#e44b4b); }
+.qz-pill .pill-icon.green  { background: linear-gradient(180deg,#4bd18a,#2bb36a); }
+.qz-pill .pill-icon.blue   { background: linear-gradient(180deg,#62b4f6,#3a98e8); }
+
+/* pill text/select */
+.qz-pill .pill-body {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width: 100px;
+}
+.qz-pill .pill-body .label {
+  font-size:13px;
+  color:#666;
+}
+.qz-pill .pill-body select {
+  border:none;
+  background:transparent;
+  font-size:15px;
+  color:#222;
+  padding:0;
+  outline:none;
+}
+
+/* big build button on the right */
+.qz-build {
+  margin-left:auto; /* push to right */
+  background: linear-gradient(180deg,#e7dfff,#d2bfff);
+  border-radius: 26px;
+  padding: 12px 22px;
+  font-weight:700;
+  border: none;
+  cursor:pointer;
+  min-width:170px;
+}
+
+/* collapsed bar styles (when user toggles collapse) */
+.qz-collapsed .qz-top,
+.qz-collapsed .qz-prompt-row,
+.qz-collapsed .qz-bottom {
+  display: none;
+}
+.qz-collapsed .qz-mini {
+  display:flex;
+}
+.qz-mini {
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#ece9f3;
+  border-radius:8px;
+  padding:10px;
+}
+
+/* responsive behavior */
+@media (max-width: 960px) {
+  .qz-top { flex-direction: column; align-items: stretch; gap:8px; }
+  .qz-subject-controls { flex-direction: column; gap:8px; }
+  .qz-subject { width:100%; }
+  .qz-collapse-btn { align-self:flex-end; }
+  .qz-bottom { gap:8px; }
+  .qz-build { margin-left:0; width:100%; border-radius:10px; }
+}
+
+    /* simple popup styling */
+    .qz-popup {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+    .qz-popup textarea {
+      width: 100%;
+      height: 120px;
+      border: 1px solid #ccc;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .qz-popup .close-btn {
+      margin-top: 10px;
+      background: crimson;
+      color: #fff;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .qz-row { margin-top: 10px; display: none; }
