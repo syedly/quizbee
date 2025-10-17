@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-vh)8d)4=6)&hk0#vf#%bx06e4@c0sa&l5#-w())$5qnj3etw20
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -61,6 +61,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  
     "http://127.0.0.1:5173",
+    "https://quizhippo.netlify.app",
 ]
 
 ROOT_URLCONF = 'quizapp.urls'
